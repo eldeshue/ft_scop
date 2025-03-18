@@ -12,7 +12,7 @@ CFLAGS = -Wall -Wextra -Werror -O2
 CXXFLAGS = -Wall -Wextra -Werror -O2
 
 # linking option
-LDFLAGS = -lglfw3 -lGL -lX11 -lpthread -lXrandr -lXi -ldl
+LDFLAGS = -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
 
 # path to the headers
 INCLUDE = -Iinclude/
@@ -41,6 +41,7 @@ OBJS = $(OBJS_CXX) $(OBJS_C)
 OBJECTS = $(patsubst %.o,$(OBJ_DIR)/%.o,$(OBJS))
 DEPS = $(OBJECTS:.o=.d)
 
+# rule for all
 all: $(TARGET)
 
 # compile C++
@@ -52,11 +53,14 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@ -MD
 
 # link together
-$(TARGET): $(OBJECTS)
+$(TARGET): $(OBJ_DIR) $(OBJECTS)
 	$(CCXX) $(CXXFLAGS) $(OBJECTS) -o $(TARGET) $(LDFLAGS)
+
+$(OBJ_DIR):
+	mkdir -p $(OBJ_DIR)
 
 .PHONY: clean all
 clean:
-	rm -f $(OBJECTS) $(DEPS) $(TARGET)
+	rm -f $(OBJECTS) $(DEPS) $(TARGET) $(OBJ_DIR)
 
 -include $(DEPS)
