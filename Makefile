@@ -5,7 +5,10 @@ CC = g++
 CXXFLAGS = -Wall -Wextra -Werror -O2
 
 # 링커 옵션
-LDFLAGS =
+LDFLAGS = -lglfw3 -lGL -lX11 -lpthread -lXrandr -lXi -ldl
+
+# 헤더파일 경로
+INCLUDE = -Iinclude/
 
 # 소스 파일 디렉토리
 SRC_DIR = ./src
@@ -14,7 +17,7 @@ SRC_DIR = ./src
 OBJ_DIR = ./obj
 
 # 생성하고자 하는 실행 파일 이름
-TARGET =
+TARGET = ft_scop
 
 # Make 할 소스 파일들
 # wildcard 로 SRC_DIR 에서 *.cc 로 된 파일들 목록을 뽑아낸 뒤에
@@ -31,7 +34,7 @@ DEPS = $(OBJECTS:.o=.d)
 all: $(TARGET)
 
 $(OBJ_DIR)/%.o : $(SRC_DIR)/%.cc
-	$(CC) $(CXXFLAGS) -c $< -o $@ -MD $(LDFLAGS)
+	$(CC) $(CXXFLAGS) $(INCLUDE) -c $< -o $@ -MD $(LDFLAGS)
 
 $(TARGET) : $(OBJECTS)
 	$(CC) $(CXXFLAGS) $(OBJECTS) -o $(TARGET) $(LDFLAGS)
