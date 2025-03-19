@@ -8,6 +8,18 @@ extern "C" {
 #include <GLFW/glfw3.h>
 }
 
+constexpr const int WINDOW_WIDTH = 800;
+constexpr const int WINDOW_HEIGHT = 600;
+
+constexpr const int VIEWPORT_LD_X = 0;
+constexpr const int VIEWPORT_LD_Y = 0;
+
+constexpr const int VIEWPORT_WIDTH = 800;
+constexpr const int VIEWPORT_HEIGHT = 600;
+
+void RegisterInputEvent(GLFWwindow* const hWindow);
+void HandleInput(GLFWwindow* const hWindow);
+
 int main(int argc, char* argv[])
 {
 	/*------------------------- Input --------------------------------*/
@@ -50,10 +62,12 @@ int main(int argc, char* argv[])
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// for mac os only
-	//glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#ifdef __APPLE__
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
 
 	// create window object
-	GLFWwindow* hWindow = glfwCreateWindow(800, 600, "ft_scop", NULL, NULL);
+	GLFWwindow* hWindow = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "ft_scop", NULL, NULL);
 	if (hWindow == NULL)
 	{
 		std::cerr << "Failed to create GLFW window" << std::endl;
@@ -62,40 +76,57 @@ int main(int argc, char* argv[])
 	}
 	glfwMakeContextCurrent(hWindow);
 
-	/*----------------------------------- GLAD --------------------------------------*/
-
-	// run GLAD to load OpenGL
-	// if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+	// load OpenGL by using GLAD
 	if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))
 	{
 		std::cerr << "Error : Failed to initialize GLAD" << std::endl;
 		return -1;
 	}
+
 	// define view port
-	glViewport(0, 0, 800, 600);
+	glViewport(VIEWPORT_LD_X, VIEWPORT_LD_Y, VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
 
-	/*----------------------------------- Event --------------------------------------*/
+	RegisterInputEvent(hWindow);
 
-	// resizing event
-	glfwSetFramebufferSizeCallback(hWindow, [](GLFWwindow* phWin, int w, int h) {
-		uintptr_t test = reinterpret_cast<uintptr_t>(phWin);
-		std::cerr << "debug: resize " << test << std::endl;
-		glViewport(0, 0, w, h);
-		});	// register call-back, capture-less lambda implicitly converts to function pointer
-
-
-	/*----------------------------------- Render --------------------------------------*/
-
+	// render loop, each iteration consist a frame
 	while (!glfwWindowShouldClose(hWindow))
 	{
-		glfwSwapBuffers(hWindow);
-		glfwPollEvents();	// wait event
-	}
+		HandleInput(hWindow);
 
-	/*----------------------------------- Render --------------------------------------*/
+		// render routine start
+
+		// render routine end
+
+		glfwSwapBuffers(hWindow);
+		glfwPollEvents();	// check event
+	}
 
 	// clean up resources
 	glfwTerminate();
 
 	return 0;
+}
+
+/**
+ * @brief register input event to handle
+ */
+void RegisterInputEvent(GLFWwindow* const hWindow)
+{
+	// resizing
+	glfwSetFramebufferSizeCallback(hWindow, [](GLFWwindow* phWin, int w, int h) {
+		uintptr_t test = reinterpret_cast<uintptr_t>(phWin);
+		std::cerr << "debug: resize " << test << std::endl;
+		glViewport(VIEWPORT_LD_X, VIEWPORT_LD_Y, w, h);
+		});	// register call-back, capture-less lambda implicitly converts to function pointer
+
+}
+
+/**
+ * @brief Handling input, keys
+ */
+void HandleInput(GLFWwindow* const hWindow)
+{
+	// esc key input
+	if (glfwGetKey(hWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+		glfwSetWindowShouldClose(hWindow, true);
 }
