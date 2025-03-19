@@ -59,8 +59,14 @@ $(TARGET): $(OBJ_DIR) $(OBJECTS)
 $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)
 
-.PHONY: clean all
 clean:
-	rm -f $(OBJECTS) $(DEPS) $(TARGET) $(OBJ_DIR)
+	rm -f $(OBJECTS) $(DEPS) $(OBJ_DIR)
+
+fclean: clean
+	rm -f $(TARGET)
+
+re: fclean all
+
+.PHONY: clean fclean all re
 
 -include $(DEPS)
