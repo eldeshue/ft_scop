@@ -1,43 +1,72 @@
 
-CC = g++
+# C++ compiler
+CCXX = g++
 
-# C++ 컴파일러 옵션
+# C compiler
+CC = gcc
+
+# C compile option
+CFLAGS = -Wall -Wextra -Werror -O2
+
+# C++ compile option
 CXXFLAGS = -Wall -Wextra -Werror -O2
 
-# 링커 옵션
-LDFLAGS =
+# linking option
+LDFLAGS = -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
 
-# 소스 파일 디렉토리
+# path to the headers
+INCLUDE = -Iinclude/
+
+# dir for src file
 SRC_DIR = ./src
 
-# 오브젝트 파일 디렉토리
+# dir for obj file
 OBJ_DIR = ./obj
 
-# 생성하고자 하는 실행 파일 이름
-TARGET =
+# name of executable
+TARGET = ft_scop
 
-# Make 할 소스 파일들
-# wildcard 로 SRC_DIR 에서 *.cc 로 된 파일들 목록을 뽑아낸 뒤에
-# notdir 로 파일 이름만 뽑아낸다.
-# (e.g SRCS 는 foo.cc bar.cc main.cc 가 된다.)
-SRCS = $(notdir $(wildcard $(SRC_DIR)/*.cc))
+# source files to Make
+# use wildcard to extract certain source file from SRC_DIR
+# get file names only by using notdir.
+SRCS_CXX = $(notdir $(wildcard $(SRC_DIR)/*.cc))
+SRCS_C = $(notdir $(wildcard $(SRC_DIR)/*.c))
+SRCS = $(SRCS_CXX) $(SRCS_C)
 
-OBJS = $(SRCS:.cc=.o)
 
-# OBJS 안의 object 파일들 이름 앞에 $(OBJ_DIR)/ 을 붙인다.
+# 각각의 파일 확장자에 맞게 오브젝트 파일 변환
+OBJS_CXX = $(SRCS_CXX:.cc=.o)
+OBJS_C = $(SRCS_C:.c=.o)
+OBJS = $(OBJS_CXX) $(OBJS_C)
 OBJECTS = $(patsubst %.o,$(OBJ_DIR)/%.o,$(OBJS))
 DEPS = $(OBJECTS:.o=.d)
 
+# rule for all
 all: $(TARGET)
 
-$(OBJ_DIR)/%.o : $(SRC_DIR)/%.cc
-	$(CC) $(CXXFLAGS) -c $< -o $@ -MD $(LDFLAGS)
+# compile C++
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cc
+	$(CCXX) $(CXXFLAGS) $(INCLUDE) -c $< -o $@ -MD
 
-$(TARGET) : $(OBJECTS)
-	$(CC) $(CXXFLAGS) $(OBJECTS) -o $(TARGET) $(LDFLAGS)
+# compile C
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@ -MD
 
-.PHONY: clean all
+# link together
+$(TARGET): $(OBJ_DIR) $(OBJECTS)
+	$(CCXX) $(CXXFLAGS) $(OBJECTS) -o $(TARGET) $(LDFLAGS)
+
+$(OBJ_DIR):
+	mkdir -p $(OBJ_DIR)
+
 clean:
-	rm -f $(OBJECTS) $(DEPS) $(TARGET)
+	rm -rf $(OBJECTS) $(DEPS) $(OBJ_DIR)
+
+fclean: clean
+	rm -f $(TARGET)
+
+re: fclean all
+
+.PHONY: clean fclean all re
 
 -include $(DEPS)
