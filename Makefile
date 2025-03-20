@@ -60,7 +60,7 @@ $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)
 
 clean:
-	rm -f $(OBJECTS) $(DEPS) $(OBJ_DIR)
+	rm -rf $(OBJECTS) $(DEPS) $(OBJ_DIR)
 
 fclean: clean
 	rm -f $(TARGET)
