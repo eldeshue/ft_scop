@@ -17,6 +17,7 @@ constexpr const int VIEWPORT_LD_Y = 0;
 constexpr const int VIEWPORT_WIDTH = 800;
 constexpr const int VIEWPORT_HEIGHT = 600;
 
+void SetGLFWOption();
 void RegisterInputEvent(GLFWwindow* const hWindow);
 void HandleInput(GLFWwindow* const hWindow);
 
@@ -32,9 +33,9 @@ int main(int argc, char* argv[])
 	}
 
 	// argument sanity check
-	std::string_view obj_file_path_name(argv[1]);
-	if (obj_file_path_name.size() <= 4 ||
-		obj_file_path_name.substr(obj_file_path_name.size() - 4) != ".obj")
+	std::string_view objFilePathName(argv[1]);
+	if (objFilePathName.size() <= 4 ||
+		objFilePathName.substr(objFilePathName.size() - 4) != ".obj")
 	{
 		std::cerr << "Error : input file must end with \'.obj\'" << std::endl;
 		return -1;
@@ -49,22 +50,8 @@ int main(int argc, char* argv[])
 	// vertices, render topology, texture(?)
 
 	/*-------------------------- GLFW --------------------------------*/
-	// glfw init
-	glfwInit();
-
-	// glfWindowHint
-	// first arg : type of option
-	// secondactual value of option
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);	// major version of OpenGL, 3,0
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);	// minor version of OpenGL, 0.3
-
-	// OpenGL mode, core-profile mode
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-	// for mac os only
-#ifdef __APPLE__
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
+	// set glfw option
+	SetGLFWOption();
 
 	// create window object
 	GLFWwindow* hWindow = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "ft_scop", NULL, NULL);
@@ -105,6 +92,29 @@ int main(int argc, char* argv[])
 	glfwTerminate();
 
 	return 0;
+}
+
+/**
+ * @brief set state of glfw
+ */
+void SetGLFWOption()
+{
+	// glfw init
+	glfwInit();
+
+	// glfWindowHint
+	// first arg : type of option
+	// secondactual value of option
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);	// major version of OpenGL, 3,0
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);	// minor version of OpenGL, 0.3
+
+	// OpenGL mode, core-profile mode
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+	// for mac os only
+#ifdef __APPLE__
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
 }
 
 /**
