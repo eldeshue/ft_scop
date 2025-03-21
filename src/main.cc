@@ -2,6 +2,9 @@
 #include <iostream>
 #include <functional>
 #include <string_view>
+#include <vector>
+#include <array>
+#include <tuple>
 
 extern "C" {
 #include <glad/glad.h>
@@ -20,6 +23,7 @@ constexpr const int VIEWPORT_HEIGHT = 600;
 void SetGLFWOption();
 void RegisterInputEvent(GLFWwindow* const hWindow);
 void HandleInput(GLFWwindow* const hWindow);
+void RenderObject();
 
 int main(int argc, char* argv[])
 {
@@ -47,7 +51,14 @@ int main(int argc, char* argv[])
 
 	// parse and initialze resources
 
+	// Get render resource
 	// vertices, render topology, texture(?)
+	using Point = std::tuple<float, float, float>;
+	std::array<Point, 3> vertices = { {
+		{-0.5f, -0.5f, 0.0f},
+		{0.5f, -0.5f, 0.0f},
+		{0.0f, 0.5f, 0.0f}
+	} };
 
 	/*-------------------------- GLFW --------------------------------*/
 	// set glfw option
@@ -75,21 +86,30 @@ int main(int argc, char* argv[])
 
 	RegisterInputEvent(hWindow);
 
+	// render resource loading
+
+	// vertex buffer
+	GLuint hVBO;
+	glGenBuffers(1, &hVBO);	// create buffer and get it's handle
+	glBindBuffer(GL_ARRAY_BUFFER, hVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices.data(), GL_STATIC_DRAW);	// no change, multiple rendering
+
 	// render loop, each iteration consist a frame
 	while (!glfwWindowShouldClose(hWindow))
 	{
 		HandleInput(hWindow);
 
 		// render routine start
-
-		// render routine end
+		RenderObject();
 
 		glfwSwapBuffers(hWindow);
 		glfwPollEvents();	// check event
 	}
 
 	// clean up resources
-	glfwTerminate();
+	glDeleteBuffers(1, &hVBO);	// vertex buffer delete
+
+	glfwTerminate();	// window destroy
 
 	return 0;
 }
@@ -140,3 +160,12 @@ void HandleInput(GLFWwindow* const hWindow)
 	if (glfwGetKey(hWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(hWindow, true);
 }
+
+/**
+ * @brief render object
+ */
+void RenderObject()
+{
+
+}
+
