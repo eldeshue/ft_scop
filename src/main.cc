@@ -94,6 +94,29 @@ int main(int argc, char* argv[])
 	glBindBuffer(GL_ARRAY_BUFFER, hVBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices.data(), GL_STATIC_DRAW);	// no change, multiple rendering
 
+	// shader compile and loading
+	char const* const shaderSource =
+		"#version 330 core\n"
+		"layout (location = 0) in vec3 aPos;\n"
+		"void main()\n"
+		"{\n"
+		"   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+		"}\0";
+
+	GLuint hVertexShader = glCreateShader(GL_VERTEX_SHADER);// create vertex shader handle
+	glShaderSource(hVertexShader, 1, &shaderSource, NULL);	// set multiple shader source file
+	glCompileShader(hVertexShader);							// compile and link
+
+	int isVertexShaderCompileSuccess = 0;
+	char infoLog[512];
+	glGetShaderiv(hVertexShader, GL_COMPILE_STATUS, &isVertexShaderCompileSuccess);
+	if (!isVertexShaderCompileSuccess)
+	{
+		glGetShaderInfoLog(hVertexShader, 512, NULL, infoLog);
+		std::cerr << "Error : vertex shader compilation failed\n" << infoLog << std::endl;
+		return -1;
+	}
+
 	// render loop, each iteration consist a frame
 	while (!glfwWindowShouldClose(hWindow))
 	{
