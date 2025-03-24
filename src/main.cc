@@ -120,6 +120,20 @@ int main(int argc, char* argv[])
 		exit(1);
 	}
 
+	// assemble pipeline
+	GLuint hShaderProgram = glCreateProgram();
+	glAttachShader(hShaderProgram, hVShader);
+	glAttachShader(hShaderProgram, hFShader);
+	glLinkProgram(hShaderProgram);	// link shaders, create executable
+	int isShaderLinkSuccess = 0;
+	glGetProgramiv(hShaderProgram, GL_LINK_STATUS, &isShaderLinkSuccess);
+	if (!isShaderLinkSuccess) {
+		//		glGetProgramInfoLog(hShaderProgram, 512, NULL, infoLog);
+		std::cerr << "Error : shader link failed." << std::endl;
+		return 1;
+	}
+	glDeleteShader(hVShader);
+	glDeleteShader(hFShader);	// after link, no need shader object(reuse otherwise)
 
 	// render loop, each iteration consist a frame
 	while (!glfwWindowShouldClose(hWindow))
