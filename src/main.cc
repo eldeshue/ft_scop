@@ -114,7 +114,7 @@ int main(int argc, char* argv[])
 
 	GLuint hVShader = CreateVertexShader(vertexShaderSource);
 	GLuint hFShader = CreateFragmentShader(fragmentShaderSource);
-	if (hVShader == -1 || hFShader == -1)
+	if (hVShader == NULL || hFShader == NULL)
 	{
 		// shader compile failed
 		exit(1);
@@ -204,7 +204,7 @@ GLuint CreateVertexShader(char const* const shaderSource)
 	{
 		glGetShaderInfoLog(hVertexShader, 512, NULL, infoLog);
 		std::cerr << "Error : vertex shader compilation failed\n" << infoLog << std::endl;
-		return -1;
+		return 0;
 	}
 	return hVertexShader;
 }
@@ -225,7 +225,7 @@ GLuint CreateFragmentShader(char const* const shaderSource)
 	{
 		glGetShaderInfoLog(hFragmentShader, 512, NULL, infoLog);
 		std::cerr << "Error : fragment shader compilation failed\n" << infoLog << std::endl;
-		return -1;
+		return 0;
 	}
 	return hFragmentShader;
 }
