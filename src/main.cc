@@ -110,11 +110,11 @@ int main(int argc, char* argv[])
 		"#version 330 core\n"
 		"out vec4 FragColor;\n"
 		"void main()\n"
-		"{ FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);}\0";	// decide color of fragment orange
+		"{ FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);}\0";	// decide color of fragment, orange
 
 	GLuint hVShader = CreateVertexShader(vertexShaderSource);
 	GLuint hFShader = CreateFragmentShader(fragmentShaderSource);
-	if (hVShader == NULL || hFShader == NULL)
+	if (hVShader == 0 || hFShader == 0)
 	{
 		// shader compile failed
 		exit(1);
