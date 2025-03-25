@@ -67,9 +67,13 @@ int main(int argc, char* argv[])
 		{-0.5f, -0.5f, 0.0f},
 		{0.5f, -0.5f, 0.0f},
 		{0.0f, 0.5f, 0.0f},
-		{0.0f, -0.5f, 0.0f}
+		{0.0f, -0.8f, 0.0f}
 	} };
 
+	std::array<uint32_t, 6> indices = {
+		0, 1, 2,
+		0, 1, 3
+	};
 
 	std::cout << "debug : " << sizeof(std::array<Point, 3>) << '\n';
 
@@ -139,15 +143,19 @@ int main(int argc, char* argv[])
 	glDeleteShader(hFShader);	// after link, no need shader object(reuse otherwise)
 
 	// create VAO
-	GLuint hVAO, hVBO;
+	GLuint hVAO, hVBO, hEBO;
 	glGenVertexArrays(1, &hVAO);
-	glGenBuffers(1, &hVBO);	// create buffer and get it's handle
+	glGenBuffers(1, &hVBO);	// create buffer for VBO
+	glGenBuffers(1, &hEBO);	// create buffer for EBO
 
 	glBindVertexArray(hVAO);	// begin, bind VAO
 
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, hEBO);	// element(index) buffer
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices.data(), GL_STATIC_DRAW);
+
 	glBindBuffer(GL_ARRAY_BUFFER, hVBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices.data(), GL_STATIC_DRAW);	// no change, multiple rendering
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)0);	// map vbo and shader program input at 0
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Point), reinterpret_cast<void*>(0));	// map vbo and shader program input at 0
 	glEnableVertexAttribArray(0); // enable layout of location 0, if another location exist another call needed
 
 	glBindVertexArray(0);	// end, unbind VAO
@@ -155,6 +163,8 @@ int main(int argc, char* argv[])
 	std::cout << "debug : " << sizeof(Point) << ' ' << 3 * sizeof(float) << '\n';
 
 	/* ------------------------------- Define Scene -----------------------------------*/
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	// render loop, each iteration consist a frame
 	while (!glfwWindowShouldClose(hWindow))
@@ -169,7 +179,8 @@ int main(int argc, char* argv[])
 
 		glUseProgram(hShaderProgram);	// bind shader program
 		glBindVertexArray(hVAO);		// bind VAO
-		glDrawArrays(GL_TRIANGLES, 0, 3);	// triangle, start position of array, number of vertex
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);	// topology, size, type, start offset
+		glBindVertexArray(0);		// bind VAO
 
 		glfwSwapBuffers(hWindow);
 		glfwPollEvents();	// check event
