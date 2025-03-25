@@ -29,6 +29,12 @@ GLuint CreateFragmentShader(char const* const shaderSource);
 
 void RenderObject();
 
+typedef struct Point {
+	float x;
+	float y;
+	float z;
+} Point;
+
 int main(int argc, char* argv[])
 {
 	/*------------------------- Input --------------------------------*/
@@ -57,12 +63,15 @@ int main(int argc, char* argv[])
 
 	// Get render resource
 	// vertices, render topology, texture(?)
-	using Point = std::tuple<float, float, float>;
-	std::array<Point, 3> vertices = { {
+	std::array<Point, 4> vertices = { {
 		{-0.5f, -0.5f, 0.0f},
 		{0.5f, -0.5f, 0.0f},
-		{0.0f, 0.5f, 0.0f}
+		{0.0f, 0.5f, 0.0f},
+		{0.0f, -0.5f, 0.0f}
 	} };
+
+
+	std::cout << "debug : " << sizeof(std::array<Point, 3>) << '\n';
 
 	/*-------------------------- GLFW --------------------------------*/
 	// set glfw option
@@ -91,12 +100,6 @@ int main(int argc, char* argv[])
 	RegisterInputEvent(hWindow);
 
 	// render resource loading
-
-	// vertex buffer
-	GLuint hVBO;
-	glGenBuffers(1, &hVBO);	// create buffer and get it's handle
-	glBindBuffer(GL_ARRAY_BUFFER, hVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices.data(), GL_STATIC_DRAW);	// no change, multiple rendering
 
 	// shader compile and loading
 	char const* const vertexShaderSource =
@@ -135,6 +138,24 @@ int main(int argc, char* argv[])
 	glDeleteShader(hVShader);
 	glDeleteShader(hFShader);	// after link, no need shader object(reuse otherwise)
 
+	// create VAO
+	GLuint hVAO, hVBO;
+	glGenVertexArrays(1, &hVAO);
+	glGenBuffers(1, &hVBO);	// create buffer and get it's handle
+
+	glBindVertexArray(hVAO);	// begin, bind VAO
+
+	glBindBuffer(GL_ARRAY_BUFFER, hVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices.data(), GL_STATIC_DRAW);	// no change, multiple rendering
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)0);	// map vbo and shader program input at 0
+	glEnableVertexAttribArray(0); // enable layout of location 0, if another location exist another call needed
+
+	glBindVertexArray(0);	// end, unbind VAO
+
+	std::cout << "debug : " << sizeof(Point) << ' ' << 3 * sizeof(float) << '\n';
+
+	/* ------------------------------- Define Scene -----------------------------------*/
+
 	// render loop, each iteration consist a frame
 	while (!glfwWindowShouldClose(hWindow))
 	{
@@ -143,12 +164,21 @@ int main(int argc, char* argv[])
 		// render routine start
 		RenderObject();
 
+		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		glUseProgram(hShaderProgram);	// bind shader program
+		glBindVertexArray(hVAO);		// bind VAO
+		glDrawArrays(GL_TRIANGLES, 0, 3);	// triangle, start position of array, number of vertex
+
 		glfwSwapBuffers(hWindow);
 		glfwPollEvents();	// check event
 	}
 
 	// clean up resources
+	glDeleteVertexArrays(1, &hVAO);
 	glDeleteBuffers(1, &hVBO);	// vertex buffer delete
+	glDeleteProgram(hShaderProgram);
 
 	glfwTerminate();	// window destroy
 
