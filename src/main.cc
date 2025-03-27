@@ -5,6 +5,7 @@
 #include <vector>
 #include <array>
 #include <tuple>
+#include <cmath>
 
 extern "C" {
 #include <glad/glad.h>
@@ -245,14 +246,16 @@ int main(int argc, char* argv[])
 		"}\0";
 	char const* const fragmentShaderSource1 =
 		"#version 330 core\n"
+		"uniform float sinGreen;"
 		"out vec4 FragColor;\n"
 		"void main()\n"
-		"{ FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);}\0";	// decide color of fragment, orange
+		"{ FragColor = vec4(0.2f, sinGreen, 0.2f, 1.0f);}\0";	// decide color of fragment, green
 	char const* const fragmentShaderSource2 =
 		"#version 330 core\n"
+		"uniform float cosRed;"
 		"out vec4 FragColor;\n"
 		"void main()\n"
-		"{ FragColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);}\0";	// decide color of fragment, orange
+		"{ FragColor = vec4(cosRed, 0.2f, 0.2f, 1.0f);}\0";	// decide color of fragment, orange
 
 	GLuint hVShader = CreateVertexShader(vertexShaderSource);
 	GLuint hFShader1 = CreateFragmentShader(fragmentShaderSource1);
@@ -287,11 +290,23 @@ int main(int argc, char* argv[])
 	{
 		HandleInput(hWindow);
 
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
+		// update the uniform
+		float t = glfwGetTime();
+		float greenValue = sin(t) / 2.0f + 0.5f;
+		float redValue = cos(t) / 2.0f + 0.5f;
+		GLint hUniformSinGreen = glGetUniformLocation(hShaderProgram1, "sinGreen");
+		GLint hUniformCosRed = glGetUniformLocation(hShaderProgram2, "cosRed");
+
+		// update uniform
+
 		// render routine start
+		glUniform1f(hUniformSinGreen, greenValue);
 		RenderTriangles(60, hVAO1, hShaderProgram1);
+
+		glUniform1f(hUniformCosRed, redValue);
 		RenderTriangles(60, hVAO2, hShaderProgram2);
 
 		glfwSwapBuffers(hWindow);
