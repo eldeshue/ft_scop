@@ -70,20 +70,141 @@ int main(int argc, char* argv[])
 	// Get render resource
 	// vertices, render topology, texture(?)
 	std::vector<Point> vertices = {
-		{-0.5f, -0.5f, 0.0f},
-		{0.5f, -0.5f, 0.0f},
-		{0.0f, 0.5f, 0.0f},
-		{0.3f, -0.8f, 0.0f},
-		{1.0f, 0.1f, 0.0f}
+		{-0.5f, -0.6f, 0.0f},
+		{0.5f, -0.6f, 0.0f},
+		{-0.0f, 0.6f, 0.0f},
+		{0.3f, -0.9f, 0.0f},
+		{-0.5f, 0.9f, 0.0f},
+		{0.3f, -0.3f, 0.0f},
+		{-0.8f, -0.1f, 0.0f},
+		{0.5f, -0.9f, 0.0f},
+		{0.3f, -0.1f, 0.0f},
+		{1.0f, 0.1311f, 0.0f}
 	};
 
 	std::vector<uint32_t> indices1 = {
-		0, 2, 1,
-		0, 1, 3,
+	0, 1, 2,
+	0, 1, 3,
+	0, 1, 4,
+	0, 1, 5,
+	0, 1, 6,
+	0, 1, 7,
+	0, 1, 8,
+	0, 1, 9,
+	0, 2, 3,
+	0, 2, 4,
+	0, 2, 5,
+	0, 2, 6,
+	0, 2, 7,
+	0, 2, 8,
+	0, 2, 9,
+	0, 3, 4,
+	0, 3, 5,
+	0, 3, 6,
+	0, 3, 7,
+	0, 3, 8,
+	0, 3, 9,
+	0, 4, 5,
+	0, 4, 6,
+	0, 4, 7,
+	0, 4, 8,
+	0, 4, 9,
+	0, 5, 6,
+	0, 5, 7,
+	0, 5, 8,
+	0, 5, 9,
+	0, 6, 7,
+	0, 6, 8,
+	0, 6, 9,
+	0, 7, 8,
+	0, 7, 9,
+	0, 8, 9,
+	1, 2, 3,
+	1, 2, 4,
+	1, 2, 5,
+	1, 2, 6,
+	1, 2, 7,
+	1, 2, 8,
+	1, 2, 9,
+	1, 3, 4,
+	1, 3, 5,
+	1, 3, 6,
+	1, 3, 7,
+	1, 3, 8,
+	1, 3, 9,
+	1, 4, 5,
+	1, 4, 6,
+	1, 4, 7,
+	1, 4, 8,
+	1, 4, 9,
+	1, 5, 6,
+	1, 5, 7,
+	1, 5, 8,
+	1, 5, 9,
+	1, 6, 7,
 	};
 	std::vector<uint32_t> indices2 = {
-		2, 1, 4,
-		1, 3, 4
+	1, 6, 8,
+	1, 6, 9,
+	1, 7, 8,
+	1, 7, 9,
+	1, 8, 9,
+	2, 3, 4,
+	2, 3, 5,
+	2, 3, 6,
+	2, 3, 7,
+	2, 3, 8,
+	2, 3, 9,
+	2, 4, 5,
+	2, 4, 6,
+	2, 4, 7,
+	2, 4, 8,
+	2, 4, 9,
+	2, 5, 6,
+	2, 5, 7,
+	2, 5, 8,
+	2, 5, 9,
+	2, 6, 7,
+	2, 6, 8,
+	2, 6, 9,
+	2, 7, 8,
+	2, 7, 9,
+	2, 8, 9,
+	3, 4, 5,
+	3, 4, 6,
+	3, 4, 7,
+	3, 4, 8,
+	3, 4, 9,
+	3, 5, 6,
+	3, 5, 7,
+	3, 5, 8,
+	3, 5, 9,
+	3, 6, 7,
+	3, 6, 8,
+	3, 6, 9,
+	3, 7, 8,
+	3, 7, 9,
+	3, 8, 9,
+	4, 5, 6,
+	4, 5, 7,
+	4, 5, 8,
+	4, 5, 9,
+	4, 6, 7,
+	4, 6, 8,
+	4, 6, 9,
+	4, 7, 8,
+	4, 7, 9,
+	4, 8, 9,
+	5, 6, 7,
+	5, 6, 8,
+	5, 6, 9,
+	5, 7, 8,
+	5, 7, 9,
+	5, 8, 9,
+	6, 7, 8,
+	6, 7, 9,
+	6, 8, 9,
+	7, 8, 9
 	};
 
 	/*-------------------------- GLFW --------------------------------*/
@@ -114,7 +235,7 @@ int main(int argc, char* argv[])
 
 	// render resource loading
 
-	// shader compile and loading
+		// shader compile and loading
 	char const* const vertexShaderSource =
 		"#version 330 core\n"
 		"layout (location = 0) in vec3 aPos;\n"
@@ -170,8 +291,8 @@ int main(int argc, char* argv[])
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		// render routine start
-		RenderTriangles(2, hVAO1, hShaderProgram1);
-		RenderTriangles(2, hVAO2, hShaderProgram2);
+		RenderTriangles(60, hVAO1, hShaderProgram1);
+		RenderTriangles(60, hVAO2, hShaderProgram2);
 
 		glfwSwapBuffers(hWindow);
 		glfwPollEvents();	// check event
@@ -200,8 +321,8 @@ void SetGLFWOption()
 	glfwInit();
 
 	// glfWindowHint
-	// first arg : type of option
-	// secondactual value of option
+		// first arg : type of option
+		// secondactual value of option
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);	// major version of OpenGL, 3,0
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);	// minor version of OpenGL, 0.3
 
