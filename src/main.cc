@@ -249,13 +249,13 @@ int main(int argc, char* argv[])
 		"uniform float sinGreen;"
 		"out vec4 FragColor;\n"
 		"void main()\n"
-		"{ FragColor = vec4(0.2f, sinGreen, 0.2f, 1.0f);}\0";	// decide color of fragment, green
+		"{ FragColor = vec4(0.0f, sinGreen, 0.0f, 1.0f);}\0";	// decide color of fragment, green
 	char const* const fragmentShaderSource2 =
 		"#version 330 core\n"
 		"uniform float cosRed;"
 		"out vec4 FragColor;\n"
 		"void main()\n"
-		"{ FragColor = vec4(cosRed, 0.2f, 0.2f, 1.0f);}\0";	// decide color of fragment, orange
+		"{ FragColor = vec4(cosRed, 0.0f, 0.0f, 1.0f);}\0";	// decide color of fragment, orange
 
 	GLuint hVShader = CreateVertexShader(vertexShaderSource);
 	GLuint hFShader1 = CreateFragmentShader(fragmentShaderSource1);
