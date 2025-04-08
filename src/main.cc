@@ -10,6 +10,9 @@
 extern "C" {
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 }
 
 constexpr const int WINDOW_WIDTH = 800;
@@ -26,9 +29,9 @@ void RegisterInputEvent(GLFWwindow* const hWindow);
 void HandleInput(GLFWwindow* const hWindow);
 
 typedef struct Point {
-	float x;
-	float y;
-	float z;
+	float x, y, z;
+	float r, g, b;
+	float tx, ty;
 } Point;
 
 GLuint CreateBO();
@@ -39,6 +42,8 @@ GLuint CreateVAO(GLuint const hVBO, GLuint const hEBO);
 GLuint CreateVertexShader(char const* const shaderSource);
 GLuint CreateFragmentShader(char const* const shaderSource);
 GLuint CreateShaderProgram(GLuint const hVShader, GLuint const hFShader);
+
+GLuint CreateTexture2D(char const* const imagePathName);
 
 void RenderTriangles(GLsizei const numTri, GLuint const hVAO, GLuint const hShaderProgram);
 
@@ -71,141 +76,15 @@ int main(int argc, char* argv[])
 	// Get render resource
 	// vertices, render topology, texture(?)
 	std::vector<Point> vertices = {
-		{-0.5f, -0.6f, 0.0f},
-		{0.5f, -0.6f, 0.0f},
-		{-0.0f, 0.6f, 0.0f},
-		{0.3f, -0.9f, 0.0f},
-		{-0.5f, 0.9f, 0.0f},
-		{0.3f, -0.3f, 0.0f},
-		{-0.8f, -0.1f, 0.0f},
-		{0.5f, -0.9f, 0.0f},
-		{0.3f, -0.1f, 0.0f},
-		{1.0f, 0.1311f, 0.0f}
+		{-0.5, 0.5, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0},	// LU
+		{0.5, 0.5, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0},	// RU
+		{0.5, -0.5, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0},	// RD
+		{-0.5, -0.5, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0}	// LD
 	};
 
 	std::vector<uint32_t> indices1 = {
-	0, 1, 2,
-	0, 1, 3,
-	0, 1, 4,
-	0, 1, 5,
-	0, 1, 6,
-	0, 1, 7,
-	0, 1, 8,
-	0, 1, 9,
-	0, 2, 3,
-	0, 2, 4,
-	0, 2, 5,
-	0, 2, 6,
-	0, 2, 7,
-	0, 2, 8,
-	0, 2, 9,
-	0, 3, 4,
-	0, 3, 5,
-	0, 3, 6,
-	0, 3, 7,
-	0, 3, 8,
-	0, 3, 9,
-	0, 4, 5,
-	0, 4, 6,
-	0, 4, 7,
-	0, 4, 8,
-	0, 4, 9,
-	0, 5, 6,
-	0, 5, 7,
-	0, 5, 8,
-	0, 5, 9,
-	0, 6, 7,
-	0, 6, 8,
-	0, 6, 9,
-	0, 7, 8,
-	0, 7, 9,
-	0, 8, 9,
-	1, 2, 3,
-	1, 2, 4,
-	1, 2, 5,
-	1, 2, 6,
-	1, 2, 7,
-	1, 2, 8,
-	1, 2, 9,
-	1, 3, 4,
-	1, 3, 5,
-	1, 3, 6,
-	1, 3, 7,
-	1, 3, 8,
-	1, 3, 9,
-	1, 4, 5,
-	1, 4, 6,
-	1, 4, 7,
-	1, 4, 8,
-	1, 4, 9,
-	1, 5, 6,
-	1, 5, 7,
-	1, 5, 8,
-	1, 5, 9,
-	1, 6, 7,
-	};
-	std::vector<uint32_t> indices2 = {
-	1, 6, 8,
-	1, 6, 9,
-	1, 7, 8,
-	1, 7, 9,
-	1, 8, 9,
-	2, 3, 4,
-	2, 3, 5,
-	2, 3, 6,
-	2, 3, 7,
-	2, 3, 8,
-	2, 3, 9,
-	2, 4, 5,
-	2, 4, 6,
-	2, 4, 7,
-	2, 4, 8,
-	2, 4, 9,
-	2, 5, 6,
-	2, 5, 7,
-	2, 5, 8,
-	2, 5, 9,
-	2, 6, 7,
-	2, 6, 8,
-	2, 6, 9,
-	2, 7, 8,
-	2, 7, 9,
-	2, 8, 9,
-	3, 4, 5,
-	3, 4, 6,
-	3, 4, 7,
-	3, 4, 8,
-	3, 4, 9,
-	3, 5, 6,
-	3, 5, 7,
-	3, 5, 8,
-	3, 5, 9,
-	3, 6, 7,
-	3, 6, 8,
-	3, 6, 9,
-	3, 7, 8,
-	3, 7, 9,
-	3, 8, 9,
-	4, 5, 6,
-	4, 5, 7,
-	4, 5, 8,
-	4, 5, 9,
-	4, 6, 7,
-	4, 6, 8,
-	4, 6, 9,
-	4, 7, 8,
-	4, 7, 9,
-	4, 8, 9,
-	5, 6, 7,
-	5, 6, 8,
-	5, 6, 9,
-	5, 7, 8,
-	5, 7, 9,
-	5, 8, 9,
-	6, 7, 8,
-	6, 7, 9,
-	6, 8, 9,
-	7, 8, 9
+		0, 3, 1,
+		1, 3, 2
 	};
 
 	/*-------------------------- GLFW --------------------------------*/
@@ -240,50 +119,48 @@ int main(int argc, char* argv[])
 	char const* const vertexShaderSource =
 		"#version 330 core\n"
 		"layout (location = 0) in vec3 aPos;\n"
+		"layout (location = 1) in vec3 aCol;\n"
+		"layout (location = 2) in vec2 tPos;\n"
+		"out vec3 verColor;\n"
+		"out vec2 texCoord;\n"
 		"void main()\n"
 		"{\n"
-		"   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+		"   gl_Position = vec4(aPos, 1.0);\n"
+		"   verColor = aCol;\n"
+		"   texCoord = tPos;\n"
 		"}\0";
 	char const* const fragmentShaderSource1 =
 		"#version 330 core\n"
-		"uniform float sinGreen;"
+		"in vec3 verColor;\n"
+		"in vec2 texCoord;\n"
 		"out vec4 FragColor;\n"
+		"uniform sampler2D ourTexture;\n"
 		"void main()\n"
-		"{ FragColor = vec4(0.0f, sinGreen, 0.0f, 1.0f);}\0";	// decide color of fragment, green
-	char const* const fragmentShaderSource2 =
-		"#version 330 core\n"
-		"uniform float cosRed;"
-		"out vec4 FragColor;\n"
-		"void main()\n"
-		"{ FragColor = vec4(cosRed, 0.0f, 0.0f, 1.0f);}\0";	// decide color of fragment, orange
+		"{ FragColor = texture(ourTexture, texCoord) * vec4(verColor, 1.0f);}\0";
 
 	GLuint hVShader = CreateVertexShader(vertexShaderSource);
 	GLuint hFShader1 = CreateFragmentShader(fragmentShaderSource1);
-	GLuint hFShader2 = CreateFragmentShader(fragmentShaderSource2);
-	if (hVShader == 0 || hFShader1 == 0 || hFShader2 == 0)
+	if (hVShader == 0 || hFShader1 == 0)
 	{
 		// shader compile failed
 		exit(1);
 	}
 
-	GLuint hShaderProgram1 = CreateShaderProgram(hVShader, hFShader1);
-	GLuint hShaderProgram2 = CreateShaderProgram(hVShader, hFShader2);
-	if (hShaderProgram1 == 0 || hShaderProgram2 == 0) return 1;
+	GLuint hShaderProgram = CreateShaderProgram(hVShader, hFShader1);
+	if (hShaderProgram == 0) return 1;
 
 	glDeleteShader(hVShader);
 	glDeleteShader(hFShader1);	// after link, no need shader object(reuse otherwise)
-	glDeleteShader(hFShader2);
 
 	// init render resources
 	GLuint const hVBO = CreateVBO(vertices);
-	GLuint const hEBO1 = CreateEBO(indices1);
-	GLuint const hEBO2 = CreateEBO(indices2);
-	GLuint const hVAO1 = CreateVAO(hVBO, hEBO1);
-	GLuint const hVAO2 = CreateVAO(hVBO, hEBO2);
+	GLuint const hEBO = CreateEBO(indices1);
+	GLuint const hVAO = CreateVAO(hVBO, hEBO);
+	GLuint const hTexture = CreateTexture2D("./textures/container.jpg");
 
 	/* ------------------------------- Define Scene -----------------------------------*/
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	// render loop, each iteration consist a frame
 	while (!glfwWindowShouldClose(hWindow))
@@ -293,34 +170,19 @@ int main(int argc, char* argv[])
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		// update the uniform
-		float t = glfwGetTime();
-		float greenValue = sin(t) / 2.0f + 0.5f;
-		float redValue = cos(t) / 2.0f + 0.5f;
-		GLint hUniformSinGreen = glGetUniformLocation(hShaderProgram1, "sinGreen");
-		GLint hUniformCosRed = glGetUniformLocation(hShaderProgram2, "cosRed");
-
-		// update uniform
-
 		// render routine start
-		glUniform1f(hUniformSinGreen, greenValue);
-		RenderTriangles(60, hVAO1, hShaderProgram1);
-
-		glUniform1f(hUniformCosRed, redValue);
-		RenderTriangles(60, hVAO2, hShaderProgram2);
+		glBindTexture(GL_TEXTURE_2D, hTexture);	// by binding texture, don't need to update uniform
+		RenderTriangles(2, hVAO, hShaderProgram);
 
 		glfwSwapBuffers(hWindow);
 		glfwPollEvents();	// check event
 	}
 
 	// clean up resources
-	glDeleteVertexArrays(1, &hVAO1);
-	glDeleteVertexArrays(1, &hVAO2);
+	glDeleteVertexArrays(1, &hVAO);
 	glDeleteBuffers(1, &hVBO);	// buffer delete
-	glDeleteBuffers(1, &hEBO1);	// buffer delete
-	glDeleteBuffers(1, &hEBO2);	// buffer delete
-	glDeleteProgram(hShaderProgram1);
-	glDeleteProgram(hShaderProgram2);
+	glDeleteBuffers(1, &hEBO);	// buffer delete
+	glDeleteProgram(hShaderProgram);
 
 	glfwTerminate();	// window destroy
 
@@ -416,6 +278,11 @@ GLuint CreateVAO(GLuint const hVBO, GLuint const hEBO)
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Point), reinterpret_cast<void*>(0));	// map vbo and shader program input at 0
 	glEnableVertexAttribArray(0); // enable layout of location 0, if another location exist another call needed
 
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Point), reinterpret_cast<void*>(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Point), reinterpret_cast<void*>(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+
 	glBindVertexArray(0);
 	// end setting
 
@@ -478,6 +345,40 @@ GLuint CreateShaderProgram(GLuint const hVShader, GLuint const hFShader)
 		return 0;
 	}
 	return hShaderProgram;
+}
+
+GLuint CreateTexture2D(char const* const imagePathName)
+{
+	// create texture
+	GLuint hTexture = 0;
+	glGenTextures(1, &hTexture);
+
+	// bind texture as 2d texture
+	glBindTexture(GL_TEXTURE_2D, hTexture);
+
+	// setting options, need binding
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// wrap options
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);	// wrap options
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);	// minification, mipmap
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);	// magnification, filter
+
+	// load image
+	int width, height, nrChannels;
+	stbi_set_flip_vertically_on_load(true);	// flip image to match the coordinate between texture and NDC
+	u_char* data = stbi_load(imagePathName, &width, &height, &nrChannels, 0);
+	if (data)
+	{
+		// init texture with image
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else
+	{
+		std::cerr << "Error : Texture load failed." << std::endl;
+		return 0;
+	}
+	stbi_image_free(data);
+	return hTexture;
 }
 
 /**
