@@ -32,7 +32,7 @@ void RegisterInputEvent(GLFWwindow* const hWindow)
 	// resizing
 	glfwSetFramebufferSizeCallback(hWindow, [](GLFWwindow* phWin, int w, int h) {
 		uintptr_t test = reinterpret_cast<uintptr_t>(phWin);
-		glViewport(VIEWPORT_LD_X, VIEWPORT_LD_Y, w, h);
+		glViewport(VIEWPORT_LD_X, VIEWPORT_LD_Y, w + test - test, h);
 		});	// register call-back, capture-less lambda implicitly converts to function pointer
 
 }
