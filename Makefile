@@ -12,10 +12,10 @@ CFLAGS = -Wall -Wextra -Werror -O2
 CXXFLAGS = -Wall -Wextra -Werror -O2
 
 # linking option
-LDFLAGS = -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
+LDFLAGS = -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl -L./lib/ft_math -lftmath
 
 # path to the headers
-INCLUDE = -Iinclude/
+INCLUDE = -Iinclude -Ilib
 
 # dir for src file
 SRC_DIR = ./src
@@ -25,6 +25,10 @@ OBJ_DIR = ./obj
 
 # name of executable
 TARGET = ft_scop
+
+# Math Library
+FT_MATH_LIB = ./lib/ft_math/libftmath.a
+FT_MATH_DIR = ./lib/ft_math
 
 # source files to Make
 # use wildcard to extract certain source file from SRC_DIR
@@ -54,15 +58,18 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 
 # link together
 $(TARGET): $(OBJ_DIR) $(OBJECTS)
+	$(MAKE) -C $(FT_MATH_DIR)
 	$(CCXX) $(CXXFLAGS) $(OBJECTS) -o $(TARGET) $(LDFLAGS)
 
 $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)
 
 clean:
+	$(MAKE) -C $(FT_MATH_DIR) clean
 	rm -rf $(OBJECTS) $(DEPS) $(OBJ_DIR)
 
 fclean: clean
+	$(MAKE) -C $(FT_MATH_DIR) fclean
 	rm -f $(TARGET)
 
 re: fclean all
