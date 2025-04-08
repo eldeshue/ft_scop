@@ -5,10 +5,6 @@
 #include <glad/glad.h>
 #include <vector>
 
-// image loading
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-
 typedef struct Point {
 	float x, y, z;
 	float r, g, b;

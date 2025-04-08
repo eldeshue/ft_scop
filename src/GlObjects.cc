@@ -1,4 +1,8 @@
 
+// image loading
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 #include "GlObjects.h"
 
 GLuint CreateBO()
