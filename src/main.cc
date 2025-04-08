@@ -136,7 +136,7 @@ int main(int argc, char* argv[])
 		"out vec4 FragColor;\n"
 		"uniform sampler2D ourTexture;\n"
 		"void main()\n"
-		"{ FragColor = texture(ourTexture, texCoord);}\0";
+		"{ FragColor = texture(ourTexture, texCoord) * vec4(verColor, 1.0f);}\0";
 
 	GLuint hVShader = CreateVertexShader(vertexShaderSource);
 	GLuint hFShader1 = CreateFragmentShader(fragmentShaderSource1);
@@ -364,6 +364,7 @@ GLuint CreateTexture2D(char const* const imagePathName)
 
 	// load image
 	int width, height, nrChannels;
+	stbi_set_flip_vertically_on_load(true);	// flip image to match the coordinate between texture and NDC
 	u_char* data = stbi_load(imagePathName, &width, &height, &nrChannels, 0);
 	if (data)
 	{
