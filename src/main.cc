@@ -14,8 +14,10 @@
 #include "GlObjects.h"
 #include "Shader.h"
 
-// math
+extern "C"
+{
 #include "ft_math/ft_math.h"
+}
 
 void RenderTriangles(GLsizei const numTri, GLuint const hVAO, GLuint const hShaderProgram);
 
@@ -39,27 +41,7 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
-	/*------------------------- Parse --------------------------------*/
-
-	// initialze filestream
-
-	// parse and initialze resources
-
-	// Get render resource
-	// vertices, render topology, texture(?)
-	std::vector<Point> vertices = {
-		{-0.5, 0.5, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0},	// LU
-		{0.5, 0.5, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0},	// RU
-		{0.5, -0.5, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0},	// RD
-		{-0.5, -0.5, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0}	// LD
-	};
-
-	std::vector<uint32_t> indices1 = {
-		0, 3, 1,
-		1, 3, 2
-	};
-
-	/*-------------------------- GLFW --------------------------------*/
+	/*-------------------------- Config GL and window --------------------------------*/
 	// set glfw option
 	SetGLFWOption();
 
@@ -86,37 +68,122 @@ int main(int argc, char* argv[])
 
 	RegisterInputEvent(hWindow);
 
-	// render resource loading
+	/*------------------------- Parse --------------------------------*/
 
-	// shader compile and loading
-	Shader shaderProgram("./shader/VertexShader.glsl", "./shader/FragmentShader.glsl");
+	// initialze filestream
 
-	// init render resources
+	// parse and initialze resources
+
+	// Get render resource
+	// vertices, render topology, texture(?)
+	std::vector<Point> vertices = {
+		{-50, 50, 0, 1.0, 0.0, 0.0, 0.0, 1.0},
+		{50, 50, 0, 0.0, 1.0, 0.0, 1.0, 1.0},
+		{50, -50, 0, 0.0, 0.0, 1.0, 1.0, 0.0},
+		{-50, -50, 0, 1.0, 1.0, 1.0, 0.0, 0.0}
+	};
+
+	std::vector<uint32_t> indices1 = {
+		0, 3, 1,
+		1, 3, 2
+	};
+
+	/*-------------------------- Get Render Resources --------------------------------*/
+	glEnable(GL_DEPTH_TEST);
+
 	GLuint const hVBO = CreateVBO(vertices);
 	GLuint const hEBO = CreateEBO(indices1);
 	GLuint const hVAO = CreateVAO(hVBO, hEBO);
 	GLuint const hTexture = CreateTexture2D("./textures/container.jpg");
 
-	if (hTexture == 0)
+	Shader shaderProgram("./shader/VertexShader.glsl", "./shader/FragmentShader.glsl");
+	if (shaderProgram.ID == 0)
 	{
-		std::cerr << "Error : texture loading failed" << std::endl;
+		std::cerr << "Error : Shader creation failed" << std::endl;
 		glfwTerminate();
 		return -1;
 	}
+	GLint mvpMatUniformLoc = glGetUniformLocation(shaderProgram.ID, "mvp");
 
 	/* ------------------------------- Define Scene -----------------------------------*/
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	// define model matrix(local to world matrix) for the object
+	// update by arrow key(translate)
+	// update by time(rotation z axis)
+	t_FTMFLOAT4X4 modelMatrix = ftmf44_set_scale(ftmf4_set_vector(0.1, 0.1, 0.1, 1));
+
+	// define camera, build view matrix
+	// from camera, we can define view matrix
+	// use wasd key to walk camera
+	// use mouse to rotate camera
+	// use mouse scroll key to zoom
+	t_FTMFLOAT4 camPos = ftmf4_set_vector(0, 0, -10.0, 1);
+	t_FTMFLOAT4 camTarget = ftmf4_set_vector(0, 0, 0, 1);
+	t_FTMFLOAT4 camUp = ftmf4_set_vector(0, 1, 0, 1);
+	t_FTMFLOAT4X4 viewMatrix = ftmf44_set_view(camPos, camTarget, camUp);
+
+	// build perspective matrix
+	// near plane, far plane, fov
+	// get perspective matrix from view port
+	// fov will be updated by screen resizing
+	float distNearestPlane = 5.0f;
+	float distFarestPlane = 15.0f;
+	float verticalFovRad = M_PI / 2;
+	float aspectRatio = static_cast<float>(VIEWPORT_WIDTH) / VIEWPORT_HEIGHT;
+
+	// OpenGL Style, [-1, 1]
+	t_FTMFLOAT4X4 perspectiveMatrix = ftmf44_set_scale(ftmf4_set_vector(
+		1.0f / (tanf(verticalFovRad / 2) * aspectRatio),
+		1.0f / tanf(verticalFovRad / 2),
+		(distFarestPlane + distNearestPlane) / (distFarestPlane - distNearestPlane),
+		1.0f));
+	perspectiveMatrix.data[2][3] = 1.0f;
+	perspectiveMatrix.data[3][3] = 0.0f;
+	perspectiveMatrix.data[3][2] = -2 * (distFarestPlane * distNearestPlane) / (distFarestPlane - distNearestPlane);
+
+	/*
+	// DirectX Style, [0, 1]
+	t_FTMFLOAT4X4 perspectiveMatrix = ftmf44_set_scale(ftmf4_set_vector(
+		1.0f / (tanf(verticalFovRad / 2) * aspectRatio),
+		1.0f / tanf(verticalFovRad / 2),
+		(distFarestPlane) / (distFarestPlane - distNearestPlane),
+		1.0f));
+	perspectiveMatrix.data[2][3] = 1.0f;
+	perspectiveMatrix.data[3][3] = 0.0f;
+	perspectiveMatrix.data[3][2] = -(distFarestPlane * distNearestPlane) / (distFarestPlane - distNearestPlane);
+	*/
+
+	t_FTMFLOAT4X4 mv = ftmf44_mult(&modelMatrix, &viewMatrix);
+	t_FTMFLOAT4X4 mvp = ftmf44_mult(&mv, &perspectiveMatrix);
+
+	for (int r = 0; r < 4; ++r)
+	{
+		for (int c = 0; c < 4; ++c)
+		{
+			std::cout << mvp.data[r][c] << ' ';
+		}
+		std::cout << '\n';
+	}
+	// init descriptor for glfw event
+
+	// load matrix as uniform to the shader
 
 	// render loop, each iteration consist a frame
 	while (!glfwWindowShouldClose(hWindow))
 	{
 		HandleInput(hWindow);
 
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
 
 		// render routine start
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// update resource
+		shaderProgram.use();
+		glUniformMatrix4fv(mvpMatUniformLoc, 1, GL_FALSE, mvp.data[0]);
+
 		glBindTexture(GL_TEXTURE_2D, hTexture);	// by binding texture, don't need to update uniform
 		RenderTriangles(2, hVAO, shaderProgram.ID);
 
