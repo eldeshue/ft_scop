@@ -4,46 +4,20 @@
 #include <string_view>
 #include <vector>
 #include <array>
-#include <tuple>
 #include <cmath>
 
-extern "C" {
+// set OpenGL
 #include <glad/glad.h>
-#include <GLFW/glfw3.h>
+#include "GlfwWindows.h"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+// render resources
+#include "GlObjects.h"
+#include "Shader.h"
+
+extern "C"
+{
+#include "ft_math/ft_math.h"
 }
-
-constexpr const int WINDOW_WIDTH = 800;
-constexpr const int WINDOW_HEIGHT = 600;
-
-constexpr const int VIEWPORT_LD_X = 0;
-constexpr const int VIEWPORT_LD_Y = 0;
-
-constexpr const int VIEWPORT_WIDTH = 800;
-constexpr const int VIEWPORT_HEIGHT = 600;
-
-void SetGLFWOption();
-void RegisterInputEvent(GLFWwindow* const hWindow);
-void HandleInput(GLFWwindow* const hWindow);
-
-typedef struct Point {
-	float x, y, z;
-	float r, g, b;
-	float tx, ty;
-} Point;
-
-GLuint CreateBO();
-GLuint CreateVBO(std::vector<Point> const& vertices);
-GLuint CreateEBO(std::vector<uint32_t> const& indices);
-GLuint CreateVAO(GLuint const hVBO, GLuint const hEBO);
-
-GLuint CreateVertexShader(char const* const shaderSource);
-GLuint CreateFragmentShader(char const* const shaderSource);
-GLuint CreateShaderProgram(GLuint const hVShader, GLuint const hFShader);
-
-GLuint CreateTexture2D(char const* const imagePathName);
 
 void RenderTriangles(GLsizei const numTri, GLuint const hVAO, GLuint const hShaderProgram);
 
@@ -67,27 +41,7 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
-	/*------------------------- Parse --------------------------------*/
-
-	// initialze filestream
-
-	// parse and initialze resources
-
-	// Get render resource
-	// vertices, render topology, texture(?)
-	std::vector<Point> vertices = {
-		{-0.5, 0.5, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0},	// LU
-		{0.5, 0.5, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0},	// RU
-		{0.5, -0.5, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0},	// RD
-		{-0.5, -0.5, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0}	// LD
-	};
-
-	std::vector<uint32_t> indices1 = {
-		0, 3, 1,
-		1, 3, 2
-	};
-
-	/*-------------------------- GLFW --------------------------------*/
+	/*-------------------------- Config GL and window --------------------------------*/
 	// set glfw option
 	SetGLFWOption();
 
@@ -105,6 +59,7 @@ int main(int argc, char* argv[])
 	if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))
 	{
 		std::cerr << "Error : Failed to initialize GLAD" << std::endl;
+		glfwTerminate();
 		return -1;
 	}
 
@@ -113,66 +68,124 @@ int main(int argc, char* argv[])
 
 	RegisterInputEvent(hWindow);
 
-	// render resource loading
+	/*------------------------- Parse --------------------------------*/
 
-		// shader compile and loading
-	char const* const vertexShaderSource =
-		"#version 330 core\n"
-		"layout (location = 0) in vec3 aPos;\n"
-		"layout (location = 1) in vec3 aCol;\n"
-		"layout (location = 2) in vec2 tPos;\n"
-		"out vec3 verColor;\n"
-		"out vec2 texCoord;\n"
-		"void main()\n"
-		"{\n"
-		"   gl_Position = vec4(aPos, 1.0);\n"
-		"   verColor = aCol;\n"
-		"   texCoord = tPos;\n"
-		"}\0";
-	char const* const fragmentShaderSource1 =
-		"#version 330 core\n"
-		"in vec3 verColor;\n"
-		"in vec2 texCoord;\n"
-		"out vec4 FragColor;\n"
-		"uniform sampler2D ourTexture;\n"
-		"void main()\n"
-		"{ FragColor = texture(ourTexture, texCoord) * vec4(verColor, 1.0f);}\0";
+	// initialze filestream
 
-	GLuint hVShader = CreateVertexShader(vertexShaderSource);
-	GLuint hFShader1 = CreateFragmentShader(fragmentShaderSource1);
-	if (hVShader == 0 || hFShader1 == 0)
-	{
-		// shader compile failed
-		exit(1);
-	}
+	// parse and initialze resources
 
-	GLuint hShaderProgram = CreateShaderProgram(hVShader, hFShader1);
-	if (hShaderProgram == 0) return 1;
+	// Get render resource
+	// vertices, render topology, texture(?)
+	std::vector<Point> vertices = {
+		{-50, 50, 0, 1.0, 0.0, 0.0, 0.0, 1.0},
+		{50, 50, 0, 0.0, 1.0, 0.0, 1.0, 1.0},
+		{50, -50, 0, 0.0, 0.0, 1.0, 1.0, 0.0},
+		{-50, -50, 0, 1.0, 1.0, 1.0, 0.0, 0.0}
+	};
 
-	glDeleteShader(hVShader);
-	glDeleteShader(hFShader1);	// after link, no need shader object(reuse otherwise)
+	std::vector<uint32_t> indices1 = {
+		0, 3, 1,
+		1, 3, 2
+	};
 
-	// init render resources
+	/*-------------------------- Get Render Resources --------------------------------*/
+	glEnable(GL_DEPTH_TEST);
+
 	GLuint const hVBO = CreateVBO(vertices);
 	GLuint const hEBO = CreateEBO(indices1);
 	GLuint const hVAO = CreateVAO(hVBO, hEBO);
 	GLuint const hTexture = CreateTexture2D("./textures/container.jpg");
 
+	Shader shaderProgram("./shader/VertexShader.glsl", "./shader/FragmentShader.glsl");
+	if (shaderProgram.ID == 0)
+	{
+		std::cerr << "Error : Shader creation failed" << std::endl;
+		glfwTerminate();
+		return -1;
+	}
+	GLint mvpMatUniformLoc = glGetUniformLocation(shaderProgram.ID, "mvp");
+
 	/* ------------------------------- Define Scene -----------------------------------*/
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	// define model matrix(local to world matrix) for the object
+	// update by arrow key(translate)
+	// update by time(rotation z axis)
+	t_FTMFLOAT4X4 modelMatrix = ftmf44_set_scale(ftmf4_set_vector(0.1, 0.1, 0.1, 1));
+
+	// define camera, build view matrix
+	// from camera, we can define view matrix
+	// use wasd key to walk camera
+	// use mouse to rotate camera
+	// use mouse scroll key to zoom
+	t_FTMFLOAT4 camPos = ftmf4_set_vector(0, 0, -10.0, 1);
+	t_FTMFLOAT4 camTarget = ftmf4_set_vector(0, 0, 0, 1);
+	t_FTMFLOAT4 camUp = ftmf4_set_vector(0, 1, 0, 1);
+	t_FTMFLOAT4X4 viewMatrix = ftmf44_set_view(camPos, camTarget, camUp);
+
+	// build perspective matrix
+	// near plane, far plane, fov
+	// get perspective matrix from view port
+	// fov will be updated by screen resizing
+	float distNearestPlane = 5.0f;
+	float distFarestPlane = 15.0f;
+	float verticalFovRad = M_PI / 2;
+	float aspectRatio = static_cast<float>(VIEWPORT_WIDTH) / VIEWPORT_HEIGHT;
+
+	// OpenGL Style, [-1, 1]
+	t_FTMFLOAT4X4 perspectiveMatrix = ftmf44_set_scale(ftmf4_set_vector(
+		1.0f / (tanf(verticalFovRad / 2) * aspectRatio),
+		1.0f / tanf(verticalFovRad / 2),
+		(distFarestPlane + distNearestPlane) / (distFarestPlane - distNearestPlane),
+		1.0f));
+	perspectiveMatrix.data[2][3] = 1.0f;
+	perspectiveMatrix.data[3][3] = 0.0f;
+	perspectiveMatrix.data[3][2] = -2 * (distFarestPlane * distNearestPlane) / (distFarestPlane - distNearestPlane);
+
+	/*
+	// DirectX Style, [0, 1]
+	t_FTMFLOAT4X4 perspectiveMatrix = ftmf44_set_scale(ftmf4_set_vector(
+		1.0f / (tanf(verticalFovRad / 2) * aspectRatio),
+		1.0f / tanf(verticalFovRad / 2),
+		(distFarestPlane) / (distFarestPlane - distNearestPlane),
+		1.0f));
+	perspectiveMatrix.data[2][3] = 1.0f;
+	perspectiveMatrix.data[3][3] = 0.0f;
+	perspectiveMatrix.data[3][2] = -(distFarestPlane * distNearestPlane) / (distFarestPlane - distNearestPlane);
+	*/
+
+	t_FTMFLOAT4X4 mv = ftmf44_mult(&modelMatrix, &viewMatrix);
+	t_FTMFLOAT4X4 mvp = ftmf44_mult(&mv, &perspectiveMatrix);
+
+	for (int r = 0; r < 4; ++r)
+	{
+		for (int c = 0; c < 4; ++c)
+		{
+			std::cout << mvp.data[r][c] << ' ';
+		}
+		std::cout << '\n';
+	}
+	// init descriptor for glfw event
+
+	// load matrix as uniform to the shader
 
 	// render loop, each iteration consist a frame
 	while (!glfwWindowShouldClose(hWindow))
 	{
 		HandleInput(hWindow);
 
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
 
 		// render routine start
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// update resource
+		shaderProgram.use();
+		glUniformMatrix4fv(mvpMatUniformLoc, 1, GL_FALSE, mvp.data[0]);
+
 		glBindTexture(GL_TEXTURE_2D, hTexture);	// by binding texture, don't need to update uniform
-		RenderTriangles(2, hVAO, hShaderProgram);
+		RenderTriangles(2, hVAO, shaderProgram.ID);
 
 		glfwSwapBuffers(hWindow);
 		glfwPollEvents();	// check event
@@ -182,203 +195,11 @@ int main(int argc, char* argv[])
 	glDeleteVertexArrays(1, &hVAO);
 	glDeleteBuffers(1, &hVBO);	// buffer delete
 	glDeleteBuffers(1, &hEBO);	// buffer delete
-	glDeleteProgram(hShaderProgram);
+	glDeleteTextures(1, &hTexture);
 
 	glfwTerminate();	// window destroy
 
 	return 0;
-}
-
-/**
- * @brief set state of glfw
- */
-void SetGLFWOption()
-{
-	// glfw init
-	glfwInit();
-
-	// glfWindowHint
-		// first arg : type of option
-		// secondactual value of option
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);	// major version of OpenGL, 3,0
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);	// minor version of OpenGL, 0.3
-
-	// OpenGL mode, core-profile mode
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-	// for mac os only
-#ifdef __APPLE__
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
-}
-
-/**
- * @brief register input event to handle
- */
-void RegisterInputEvent(GLFWwindow* const hWindow)
-{
-	// resizing
-	glfwSetFramebufferSizeCallback(hWindow, [](GLFWwindow* phWin, int w, int h) {
-		uintptr_t test = reinterpret_cast<uintptr_t>(phWin);
-		std::cout << "Event : resize window " << w << ' ' << h << ' ' << test << '\n';
-		glViewport(VIEWPORT_LD_X, VIEWPORT_LD_Y, w, h);
-		});	// register call-back, capture-less lambda implicitly converts to function pointer
-
-}
-
-/**
- * @brief Handling input, keys
- */
-void HandleInput(GLFWwindow* const hWindow)
-{
-	// esc key input
-	if (glfwGetKey(hWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-		glfwSetWindowShouldClose(hWindow, true);
-}
-
-GLuint CreateBO()
-{
-	GLuint hBO = 0;
-	glGenBuffers(1, &hBO);
-	return hBO;
-}
-
-GLuint CreateVBO(std::vector<Point> const& vertices)
-{
-	GLuint hVBO = CreateBO();
-
-	glBindBuffer(GL_ARRAY_BUFFER, hVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(Point) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
-	return hVBO;
-}
-
-GLuint CreateEBO(std::vector<uint32_t> const& indices)
-{
-	GLuint hEBO = CreateBO();
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, hEBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32_t) * indices.size(), indices.data(), GL_STATIC_DRAW);
-	return hEBO;
-}
-
-GLuint CreateVAO(GLuint const hVBO, GLuint const hEBO)
-{
-	GLuint hVAO = 0;
-
-	glGenVertexArrays(1, &hVAO);
-
-	// start setting
-	glBindVertexArray(hVAO);
-
-	// EBO
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, hEBO);
-
-	// VBO, input layout
-	glBindBuffer(GL_ARRAY_BUFFER, hVBO);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Point), reinterpret_cast<void*>(0));	// map vbo and shader program input at 0
-	glEnableVertexAttribArray(0); // enable layout of location 0, if another location exist another call needed
-
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Point), reinterpret_cast<void*>(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Point), reinterpret_cast<void*>(6 * sizeof(float)));
-	glEnableVertexAttribArray(2);
-
-	glBindVertexArray(0);
-	// end setting
-
-	return hVAO;
-}
-
-/**
- * @brief get GLSL source string and create vertex shader
- */
-GLuint CreateVertexShader(char const* const shaderSource)
-{
-	GLuint hVertexShader = glCreateShader(GL_VERTEX_SHADER);// create vertex shader handle
-	glShaderSource(hVertexShader, 1, &shaderSource, NULL);	// set multiple shader source file
-	glCompileShader(hVertexShader);							// compile and link
-
-	int isVertexShaderCompileSuccess = 0;
-	char infoLog[512];
-	glGetShaderiv(hVertexShader, GL_COMPILE_STATUS, &isVertexShaderCompileSuccess);
-	if (!isVertexShaderCompileSuccess)
-	{
-		glGetShaderInfoLog(hVertexShader, 512, NULL, infoLog);
-		std::cerr << "Error : vertex shader compilation failed\n" << infoLog << std::endl;
-		return 0;
-	}
-	return hVertexShader;
-}
-
-/**
- * @brief get GLSL source string and create fragment shader
- */
-GLuint CreateFragmentShader(char const* const shaderSource)
-{
-	GLuint hFragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(hFragmentShader, 1, &shaderSource, NULL);
-	glCompileShader(hFragmentShader);
-
-	int isFragmentShaderCompileSuccess = 0;
-	char infoLog[512];
-	glGetShaderiv(hFragmentShader, GL_COMPILE_STATUS, &isFragmentShaderCompileSuccess);
-	if (!isFragmentShaderCompileSuccess)
-	{
-		glGetShaderInfoLog(hFragmentShader, 512, NULL, infoLog);
-		std::cerr << "Error : fragment shader compilation failed\n" << infoLog << std::endl;
-		return 0;
-	}
-	return hFragmentShader;
-}
-
-GLuint CreateShaderProgram(GLuint const hVShader, GLuint const hFShader)
-{
-	GLuint hShaderProgram = glCreateProgram();
-	glAttachShader(hShaderProgram, hVShader);
-	glAttachShader(hShaderProgram, hFShader);
-	glLinkProgram(hShaderProgram);	// link shaders, create executable
-	int isShaderLinkSuccess = 0;
-	glGetProgramiv(hShaderProgram, GL_LINK_STATUS, &isShaderLinkSuccess);
-	if (!isShaderLinkSuccess) {
-		//		glGetProgramInfoLog(hShaderProgram, 512, NULL, infoLog);
-		std::cerr << "Error : shader link failed." << std::endl;
-		return 0;
-	}
-	return hShaderProgram;
-}
-
-GLuint CreateTexture2D(char const* const imagePathName)
-{
-	// create texture
-	GLuint hTexture = 0;
-	glGenTextures(1, &hTexture);
-
-	// bind texture as 2d texture
-	glBindTexture(GL_TEXTURE_2D, hTexture);
-
-	// setting options, need binding
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// wrap options
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);	// wrap options
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);	// minification, mipmap
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);	// magnification, filter
-
-	// load image
-	int width, height, nrChannels;
-	stbi_set_flip_vertically_on_load(true);	// flip image to match the coordinate between texture and NDC
-	u_char* data = stbi_load(imagePathName, &width, &height, &nrChannels, 0);
-	if (data)
-	{
-		// init texture with image
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-	}
-	else
-	{
-		std::cerr << "Error : Texture load failed." << std::endl;
-		return 0;
-	}
-	stbi_image_free(data);
-	return hTexture;
 }
 
 /**
