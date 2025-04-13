@@ -158,14 +158,6 @@ int main(int argc, char* argv[])
 	t_FTMFLOAT4X4 mv = ftmf44_mult(&modelMatrix, &viewMatrix);
 	t_FTMFLOAT4X4 mvp = ftmf44_mult(&mv, &perspectiveMatrix);
 
-	for (int r = 0; r < 4; ++r)
-	{
-		for (int c = 0; c < 4; ++c)
-		{
-			std::cout << mvp.data[r][c] << ' ';
-		}
-		std::cout << '\n';
-	}
 	// init descriptor for glfw event
 
 	// load matrix as uniform to the shader
