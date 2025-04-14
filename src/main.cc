@@ -14,6 +14,8 @@
 #include "GlObjects.h"
 #include "Shader.h"
 
+#include "FtCamera.h"
+
 extern "C"
 {
 #include "ft_math/ft_math.h"
@@ -66,8 +68,6 @@ int main(int argc, char* argv[])
 	// define view port
 	glViewport(VIEWPORT_LD_X, VIEWPORT_LD_Y, VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
 
-	RegisterInputEvent(hWindow);
-
 	/*------------------------- Parse --------------------------------*/
 
 	// initialze filestream
@@ -109,64 +109,19 @@ int main(int argc, char* argv[])
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-	// define model matrix(local to world matrix) for the object
-	// update by arrow key(translate)
-	// update by time(rotation z axis)
 	t_FTMFLOAT4X4 modelMatrix = ftmf44_set_scale(ftmf4_set_vector(0.1, 0.1, 0.1, 1));
+	FtCamera camera(ftmf4_set_vector(0, 0, -10.0, 1), 5.0f, 15.0f, static_cast<float>(VIEWPORT_WIDTH) / VIEWPORT_HEIGHT, 90.0f);
 
-	// define camera, build view matrix
-	// from camera, we can define view matrix
-	// use wasd key to walk camera
-	// use mouse to rotate camera
-	// use mouse scroll key to zoom
-	t_FTMFLOAT4 camPos = ftmf4_set_vector(0, 0, -10.0, 1);
-	t_FTMFLOAT4 camTarget = ftmf4_set_vector(0, 0, 0, 1);
-	t_FTMFLOAT4 camUp = ftmf4_set_vector(0, 1, 0, 1);
-	t_FTMFLOAT4X4 viewMatrix = ftmf44_set_view(camPos, camTarget, camUp);
-
-	// build perspective matrix
-	// near plane, far plane, fov
-	// get perspective matrix from view port
-	// fov will be updated by screen resizing
-	float distNearestPlane = 5.0f;
-	float distFarestPlane = 15.0f;
-	float verticalFovRad = M_PI / 2;
-	float aspectRatio = static_cast<float>(VIEWPORT_WIDTH) / VIEWPORT_HEIGHT;
-
-	// OpenGL Style, [-1, 1]
-	t_FTMFLOAT4X4 perspectiveMatrix = ftmf44_set_scale(ftmf4_set_vector(
-		1.0f / (tanf(verticalFovRad / 2) * aspectRatio),
-		1.0f / tanf(verticalFovRad / 2),
-		(distFarestPlane + distNearestPlane) / (distFarestPlane - distNearestPlane),
-		1.0f));
-	perspectiveMatrix.data[2][3] = 1.0f;
-	perspectiveMatrix.data[3][3] = 0.0f;
-	perspectiveMatrix.data[3][2] = -2 * (distFarestPlane * distNearestPlane) / (distFarestPlane - distNearestPlane);
-
-	/*
-	// DirectX Style, [0, 1]
-	t_FTMFLOAT4X4 perspectiveMatrix = ftmf44_set_scale(ftmf4_set_vector(
-		1.0f / (tanf(verticalFovRad / 2) * aspectRatio),
-		1.0f / tanf(verticalFovRad / 2),
-		(distFarestPlane) / (distFarestPlane - distNearestPlane),
-		1.0f));
-	perspectiveMatrix.data[2][3] = 1.0f;
-	perspectiveMatrix.data[3][3] = 0.0f;
-	perspectiveMatrix.data[3][2] = -(distFarestPlane * distNearestPlane) / (distFarestPlane - distNearestPlane);
-	*/
-
-	t_FTMFLOAT4X4 mv = ftmf44_mult(&modelMatrix, &viewMatrix);
-	t_FTMFLOAT4X4 mvp = ftmf44_mult(&mv, &perspectiveMatrix);
-
-	// init descriptor for glfw event
-
-	// load matrix as uniform to the shader
+	glfwSetWindowUserPointer(hWindow, &camera);
+	RegisterInputEvent(hWindow);
 
 	// render loop, each iteration consist a frame
 	while (!glfwWindowShouldClose(hWindow))
 	{
 		HandleInput(hWindow);
 
+		t_FTMFLOAT4X4 vp = camera.getVPMatrix();
+		t_FTMFLOAT4X4 mvp = ftmf44_mult(&modelMatrix, &vp);
 
 		// render routine start
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);

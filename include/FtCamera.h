@@ -2,7 +2,10 @@
 #ifndef FT_CAMERA_H
 #define FT_CAMERA_H
 
+extern "C"
+{
 #include "ft_math/ft_math.h"
+}
 
 class FtCamera
 {

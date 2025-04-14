@@ -46,7 +46,7 @@ t_FTMFLOAT4X4 FtCamera::getVMatrix() const
 
 	float const y = yaw * M_PI / 180.0f;
 	float const p = pitch * M_PI / 180.0f;
-	*(t_FTMFLOAT4*)(result.data[2]) = ftmf4_set_vector(-sinf(y) * cosf(p), -sinf(p), cosf(y) * cosf(p), 0.0f);
+	*(t_FTMFLOAT4*)(result.data[2]) = ftmf4_set_vector(-sinf(y) * cosf(p), -sinf(p), cosf(y) * cosf(p), 1.0f);
 	ftmf4_vnormalize((t_FTMFLOAT4*)(result.data[2]));
 	*(t_FTMFLOAT4*)(result.data[0])
 		= ftmf4_vcross(up, *(t_FTMFLOAT4*)(result.data[2]));
@@ -71,8 +71,8 @@ t_FTMFLOAT4X4 FtCamera::getPMatrix() const
 	/*
 	// DirectX Style, [0, 1]
 	t_FTMFLOAT4X4 perspectiveMatrix = ftmf44_set_scale(ftmf4_set_vector(
-		1.0f / (tanf(fov / 2) * aspectRatio),
-		1.0f / tanf(fov / 2),
+		1.0f / (tanf(fovRad / 2) * aspectRatio),
+		1.0f / tanf(fovRad / 2),
 		distFar / (distFar - distNear),
 		1.0f));
 	perspectiveMatrix.data[2][3] = 1.0f;
