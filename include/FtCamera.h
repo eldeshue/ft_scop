@@ -25,6 +25,7 @@ private:
 
 	float aspectRatio;
 	float fov;
+	bool rotOn;
 
 public:
 	FtCamera(t_FTMFLOAT4 const& startPos,
@@ -37,10 +38,12 @@ public:
 	void setPitch(float const deg);
 	void setAspectRatio(float const ar);
 	void setFov(float const f);
+	void setRot(bool stat);
 
 	t_FTMFLOAT4X4 getVMatrix() const;
 	t_FTMFLOAT4X4 getPMatrix() const;
 	t_FTMFLOAT4X4 getVPMatrix() const;
+	bool getRot() const;
 
 	void movePos(float const x, float const y, float const z);
 	void moveYaw(float deg);

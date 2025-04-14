@@ -6,7 +6,7 @@
 FtCamera::FtCamera(t_FTMFLOAT4 const& startPos,
 	float const nearPlane, float const farPlane, float const aspectRatio, float const fov)
 	: pos(startPos), up(ftmf4_set_vector(0.0f, 1.0f, 0.0f, 0.0f)), yaw(0.0f), pitch(0.0f),
-	distNear(nearPlane), distFar(farPlane), aspectRatio(aspectRatio), fov(fov)
+	distNear(nearPlane), distFar(farPlane), aspectRatio(aspectRatio), fov(fov), rotOn(false)
 {
 }
 
@@ -38,6 +38,11 @@ void FtCamera::setAspectRatio(float const ar)
 void FtCamera::setFov(float const f)
 {
 	fov = f;
+}
+
+void FtCamera::setRot(bool stat)
+{
+	rotOn = stat;
 }
 
 t_FTMFLOAT4X4 FtCamera::getVMatrix() const
@@ -97,6 +102,11 @@ t_FTMFLOAT4X4 FtCamera::getVPMatrix() const
 	t_FTMFLOAT4X4 v = getVMatrix();
 	t_FTMFLOAT4X4 p = getPMatrix();
 	return ftmf44_mult(&v, &p);
+}
+
+bool FtCamera::getRot() const
+{
+	return rotOn;
 }
 
 void FtCamera::movePos(float const x, float const y, float const z)
