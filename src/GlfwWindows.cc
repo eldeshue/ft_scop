@@ -48,8 +48,7 @@ void RegisterInputEvent(GLFWwindow* const hWindow)
 		FtCamera* const pCam = static_cast<FtCamera*>(glfwGetWindowUserPointer(phWin));
 		if (pCam->getRot())
 		{
-			pCam->moveYaw((curX - prevX) * sRot);
-			pCam->movePitch(-(curY - prevY) * sRot);
+			pCam->moveAngle((curX - prevX) * sRot, -(curY - prevY) * sRot);
 		}
 		prevX = curX;
 		prevY = curY;
