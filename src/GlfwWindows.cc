@@ -75,6 +75,53 @@ void RegisterInputEvent(GLFWwindow* const hWindow)
 		});
 
 	// key input
+	glfwSetKeyCallback(hWindow, [](GLFWwindow* phWin, int key, int scanCode, int action, int mode) {
+		static constexpr float const vel = 1.2;
+		static bool isWireFrame = false;
+
+		FtCamera* const pCam = static_cast<FtCamera*>(glfwGetWindowUserPointer(phWin));
+		scanCode = 0;
+		mode = 0;
+		isWireFrame += mode + scanCode;
+		if (action == GLFW_PRESS)
+		{
+			switch (key) {
+			case GLFW_KEY_W:
+				pCam->movePos(0.0f, 0.0f, vel);
+				break;
+			case GLFW_KEY_A:
+				pCam->movePos(-vel, 0.0f, 0.0f);
+				break;
+			case GLFW_KEY_S:
+				pCam->movePos(0.0f, 0.0f, -vel);
+				break;
+			case GLFW_KEY_D:
+				pCam->movePos(vel, 0.0f, 0.0f);
+				break;
+			case GLFW_KEY_Z:
+				pCam->movePos(0.0f, -vel, 0.0f);
+				break;
+			case GLFW_KEY_X:
+				pCam->movePos(0.0f, vel, 0.0f);
+				break;
+			case GLFW_KEY_TAB:
+				if (isWireFrame == false)
+				{
+					glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+					isWireFrame = true;
+				}
+				else
+				{
+					glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+					isWireFrame = false;
+				}
+				break;
+			case GLFW_KEY_BACKSPACE:
+				pCam->resetPose();
+				break;
+			}
+		}
+		});
 }
 
 /**
