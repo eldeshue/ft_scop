@@ -2,6 +2,7 @@
 #include "FtCamera.h"
 #include <cmath>
 
+#include <iostream>
 
 FtCamera::FtCamera(t_FTMFLOAT4 const& startPos,
 	float const nearPlane, float const farPlane, float const aspectRatio, float const fov) :
@@ -29,8 +30,8 @@ void FtCamera::setAngle(float const y, float const p)
 {
 	yaw = y;
 	pitch = p;
-	yaw = std::min(std::max(yaw, -89.0f), 89.0f);
-	pitch = std::min(std::max(pitch, -89.0f), 89.0f);
+	yaw = std::min(std::max(yaw, -YAW_LIMIT), YAW_LIMIT);
+	pitch = std::min(std::max(pitch, -PITCH_LIMIT), PITCH_LIMIT);
 
 	// update front
 	float const yrad = yaw * M_PI / 180.0f;
@@ -52,6 +53,7 @@ void FtCamera::setAspectRatio(float const ar)
 void FtCamera::setFov(float const f)
 {
 	fov = f;
+	fov = std::min(std::max(fov, MIN_FOV_LIMIT), MAX_FOV_LIMIT);
 }
 
 void FtCamera::setRot(bool stat)
@@ -83,24 +85,25 @@ t_FTMFLOAT4X4 FtCamera::getPMatrix() const
 	/*
 	// DirectX Style, [0, 1]
 	t_FTMFLOAT4X4 perspectiveMatrix = ftmf44_set_scale(ftmf4_set_vector(
-		1.0f / (tanf(fovRad / 2) * aspectRatio),
-		1.0f / tanf(fovRad / 2),
+		1.0f / (tanf(fovRad * 0.5f) * aspectRatio),
+		1.0f / tanf(fovRad * 0.5f),
 		distFar / (distFar - distNear),
 		1.0f));
 	perspectiveMatrix.data[2][3] = 1.0f;
 	perspectiveMatrix.data[3][3] = 0.0f;
-	perspectiveMatrix.data[3][2] = - (distFar * distNear) / (distFar - distNear);
+	perspectiveMatrix.data[3][2] = -(distFar * distNear) / (distFar - distNear);
 	*/
 
 	// OpenGL Style, [-1, 1]
 	t_FTMFLOAT4X4 perspectiveMatrix = ftmf44_set_scale(ftmf4_set_vector(
-		1.0f / (tanf(fovRad / 2) * aspectRatio),
-		1.0f / tanf(fovRad / 2),
+		1.0f / (tan(fovRad * 0.5f) * aspectRatio),
+		1.0f / tan(fovRad * 0.5f),
 		(distFar + distNear) / (distFar - distNear),
 		1.0f));
 	perspectiveMatrix.data[2][3] = 1.0f;
 	perspectiveMatrix.data[3][3] = 0.0f;
-	perspectiveMatrix.data[3][2] = -2 * (distFar * distNear) / (distFar - distNear);
+	perspectiveMatrix.data[3][2] = (distFar * distNear) * -2.0f / (distFar - distNear);
+
 	return perspectiveMatrix;
 }
 
@@ -128,13 +131,13 @@ void FtCamera::moveAngle(float const dYaw, float const dPitch)
 {
 	yaw += dYaw;
 	pitch += dPitch;
-	yaw = std::min(std::max(yaw, -89.0f), 89.0f);
-	pitch = std::min(std::max(pitch, -89.0f), 89.0f);
+	yaw = std::min(std::max(yaw, -YAW_LIMIT), YAW_LIMIT);
+	pitch = std::min(std::max(pitch, -PITCH_LIMIT), PITCH_LIMIT);
 
 	// update front
 	float const yrad = yaw * M_PI / 180.0f;
 	float const prad = pitch * M_PI / 180.0f;
-	front = ftmf4_set_vector(-sinf(yrad) * cosf(prad), -sinf(prad), cosf(yrad) * cosf(prad), 0.0f);
+	front = ftmf4_set_vector(-sin(yrad) * cos(prad), -sin(prad), cos(yrad) * cos(prad), 0.0f);
 
 	// get right using global up
 	right = ftmf4_vcross(worldUp, front);
@@ -146,6 +149,7 @@ void FtCamera::moveAngle(float const dYaw, float const dPitch)
 void FtCamera::zoom(float const dist)
 {
 	fov += dist;
+	fov = std::min(std::max(fov, MIN_FOV_LIMIT), MAX_FOV_LIMIT);
 }
 
 void FtCamera::resetPose()

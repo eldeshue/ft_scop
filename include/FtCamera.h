@@ -7,6 +7,12 @@ extern "C"
 #include "ft_math/ft_math.h"
 }
 
+#define PITCH_LIMIT 85.0f
+#define YAW_LIMIT 89.0f
+
+#define MAX_FOV_LIMIT 60.0f
+#define MIN_FOV_LIMIT 20.0f
+
 class FtCamera
 {
 private:
