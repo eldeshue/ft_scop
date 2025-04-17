@@ -114,7 +114,7 @@ int main(int argc, char* argv[])
 	glfwSetWindowUserPointer(hWindow, &camera);
 	RegisterInputEvent(hWindow);
 
-	camera.setAngle(0.0f, -89.0f);
+	//	camera.setAngle(0.0f, -89.0f);
 	t_FTMFLOAT4X4 test = camera.getVMatrix();
 	for (int r = 0; r < 4; ++r)
 	{
