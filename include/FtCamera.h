@@ -8,7 +8,6 @@ extern "C"
 }
 
 #define PITCH_LIMIT 85.0f
-#define YAW_LIMIT 89.0f
 
 #define MAX_FOV_LIMIT 60.0f
 #define MIN_FOV_LIMIT 20.0f
@@ -26,6 +25,7 @@ private:
 	t_FTMFLOAT4 up;
 	t_FTMFLOAT4 qOrigin;
 
+	float pitch;
 	float const distNear;
 	float const distFar;
 

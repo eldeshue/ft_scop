@@ -11,6 +11,7 @@ FtCamera::FtCamera(t_FTMFLOAT4 const& startPos,
 	right(ftmf4_set_vector(1.0f, 0.0f, 0.0f, 0.0f)),
 	up(ftmf4_set_vector(0.0f, 1.0f, 0.0f, 0.0f)),
 	qOrigin(ftmf4_set_id()),
+	pitch(0.0f),
 	distNear(nearPlane), distFar(farPlane),
 	aspectRatio(aspectRatio), fov(fov),
 	rotOn(false)
@@ -27,6 +28,7 @@ void FtCamera::setPos(t_FTMFLOAT4 const& p)
 
 void FtCamera::setAngle(float const y, float const p)
 {
+	pitch = 0;
 	qOrigin = ftmf4_set_id();
 	moveAngle(y, p);
 }
@@ -117,8 +119,12 @@ void FtCamera::moveAngle(float const dYaw, float const dPitch)
 {
 	static t_FTMFLOAT4 const baseUp = ftmf4_set_vector(0.0f, 1.0f, 0.0f, 0.0f);
 	static t_FTMFLOAT4 const baseFront = ftmf4_set_vector(0.0f, 0.0f, 1.0f, 0.0f);
+
 	float const y = dYaw * M_PI / 180.0f;
-	float const p = dPitch * M_PI / 180.0f;
+
+	float const prevPitch = this->pitch;
+	this->pitch = std::max(std::min(this->pitch + dPitch, PITCH_LIMIT), -PITCH_LIMIT);
+	float const p = (this->pitch - prevPitch) * M_PI / 180.0f;
 
 	t_FTMFLOAT4 qYaw = ftmf4_set_rodrigues(y, baseUp);
 	qOrigin = ftmf4_qmult(qYaw, qOrigin);
@@ -151,4 +157,5 @@ void FtCamera::resetPose()
 	right = ftmf4_set_vector(1.0f, 0.0f, 0.0f, 0.0f);
 	up = ftmf4_set_vector(0.0f, 1.0f, 0.0f, 0.0f);
 	qOrigin = ftmf4_set_id();
+	pitch = 0.0f;
 }
