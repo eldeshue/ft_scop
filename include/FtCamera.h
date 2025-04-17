@@ -7,6 +7,12 @@ extern "C"
 #include "ft_math/ft_math.h"
 }
 
+#define PITCH_LIMIT 85.0f
+#define YAW_LIMIT 89.0f
+
+#define MAX_FOV_LIMIT 60.0f
+#define MIN_FOV_LIMIT 20.0f
+
 class FtCamera
 {
 private:
@@ -15,7 +21,10 @@ private:
 	FtCamera& operator=(FtCamera const&) = delete;
 
 	t_FTMFLOAT4 pos;
-	t_FTMFLOAT4 const up;	// constant, (0, 1, 0, 0)
+	t_FTMFLOAT4 front;
+	t_FTMFLOAT4 right;
+	t_FTMFLOAT4 up;
+	t_FTMFLOAT4 const worldUp;	// world up vector, (0, 1, 0, 0)
 
 	float yaw;		// y axis
 	float pitch;	// x axis
@@ -25,6 +34,7 @@ private:
 
 	float aspectRatio;
 	float fov;
+	bool rotOn;
 
 public:
 	FtCamera(t_FTMFLOAT4 const& startPos,
@@ -33,18 +43,21 @@ public:
 
 	// setter
 	void setPos(t_FTMFLOAT4 const& p);
-	void setYaw(float const deg);
-	void setPitch(float const deg);
+	void setAngle(float const y, float const p);
 	void setAspectRatio(float const ar);
 	void setFov(float const f);
+	void setRot(bool stat);
 
 	t_FTMFLOAT4X4 getVMatrix() const;
 	t_FTMFLOAT4X4 getPMatrix() const;
 	t_FTMFLOAT4X4 getVPMatrix() const;
+	bool getRot() const;
+
+	// camera control
+	void resetPose();
 
 	void movePos(float const x, float const y, float const z);
-	void moveYaw(float deg);
-	void movePitch(float deg);
+	void moveAngle(float const dYaw, float const dPitch);
 	void zoom(float const dist);
 };
 
