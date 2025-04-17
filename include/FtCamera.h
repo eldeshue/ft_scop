@@ -8,7 +8,6 @@ extern "C"
 }
 
 #define PITCH_LIMIT 85.0f
-#define YAW_LIMIT 89.0f
 
 #define MAX_FOV_LIMIT 60.0f
 #define MIN_FOV_LIMIT 20.0f
@@ -24,11 +23,9 @@ private:
 	t_FTMFLOAT4 front;
 	t_FTMFLOAT4 right;
 	t_FTMFLOAT4 up;
-	t_FTMFLOAT4 const worldUp;	// world up vector, (0, 1, 0, 0)
+	t_FTMFLOAT4 qOrigin;
 
-	float yaw;		// y axis
-	float pitch;	// x axis
-
+	float pitch;
 	float const distNear;
 	float const distFar;
 
