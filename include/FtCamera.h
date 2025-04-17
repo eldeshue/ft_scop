@@ -24,10 +24,7 @@ private:
 	t_FTMFLOAT4 front;
 	t_FTMFLOAT4 right;
 	t_FTMFLOAT4 up;
-	t_FTMFLOAT4 const worldUp;	// world up vector, (0, 1, 0, 0)
-
-	float yaw;		// y axis
-	float pitch;	// x axis
+	t_FTMFLOAT4 qOrigin;
 
 	float const distNear;
 	float const distFar;

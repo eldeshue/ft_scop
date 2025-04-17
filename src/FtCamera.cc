@@ -10,8 +10,7 @@ FtCamera::FtCamera(t_FTMFLOAT4 const& startPos,
 	front(ftmf4_set_vector(0.0f, 0.0f, 1.0f, 0.0f)),
 	right(ftmf4_set_vector(1.0f, 0.0f, 0.0f, 0.0f)),
 	up(ftmf4_set_vector(0.0f, 1.0f, 0.0f, 0.0f)),
-	worldUp(ftmf4_set_vector(0.0f, 1.0f, 0.0f, 0.0f)),
-	yaw(0.0f), pitch(0.0f),
+	qOrigin(ftmf4_set_id()),
 	distNear(nearPlane), distFar(farPlane),
 	aspectRatio(aspectRatio), fov(fov),
 	rotOn(false)
@@ -28,21 +27,8 @@ void FtCamera::setPos(t_FTMFLOAT4 const& p)
 
 void FtCamera::setAngle(float const y, float const p)
 {
-	yaw = y;
-	pitch = p;
-	yaw = std::min(std::max(yaw, -YAW_LIMIT), YAW_LIMIT);
-	pitch = std::min(std::max(pitch, -PITCH_LIMIT), PITCH_LIMIT);
-
-	// update front
-	float const yrad = yaw * M_PI / 180.0f;
-	float const prad = pitch * M_PI / 180.0f;
-	front = ftmf4_set_vector(-sinf(yrad) * cosf(prad), -sinf(prad), cosf(yrad) * cosf(prad), 0.0f);
-
-	// get right using global up
-	right = ftmf4_vcross(worldUp, front);
-
-	// get up using up and front
-	up = ftmf4_vcross(front, right);
+	qOrigin = ftmf4_set_id();
+	moveAngle(y, p);
 }
 
 void FtCamera::setAspectRatio(float const ar)
@@ -129,21 +115,28 @@ void FtCamera::movePos(float const x, float const y, float const z)
 
 void FtCamera::moveAngle(float const dYaw, float const dPitch)
 {
-	yaw += dYaw;
-	pitch += dPitch;
-	yaw = std::min(std::max(yaw, -YAW_LIMIT), YAW_LIMIT);
-	pitch = std::min(std::max(pitch, -PITCH_LIMIT), PITCH_LIMIT);
+	static t_FTMFLOAT4 const baseUp = ftmf4_set_vector(0.0f, 1.0f, 0.0f, 0.0f);
+	static t_FTMFLOAT4 const baseFront = ftmf4_set_vector(0.0f, 0.0f, 1.0f, 0.0f);
+	float const y = dYaw * M_PI / 180.0f;
+	float const p = dPitch * M_PI / 180.0f;
 
-	// update front
-	float const yrad = yaw * M_PI / 180.0f;
-	float const prad = pitch * M_PI / 180.0f;
-	front = ftmf4_set_vector(-sin(yrad) * cos(prad), -sin(prad), cos(yrad) * cos(prad), 0.0f);
+	t_FTMFLOAT4 qYaw = ftmf4_set_rodrigues(y, baseUp);
+	qOrigin = ftmf4_qmult(qYaw, qOrigin);
+	ftmf4_qnormalize(&qOrigin);
 
-	// get right using global up
-	right = ftmf4_vcross(worldUp, front);
+	t_FTMFLOAT4 tempFront = baseFront;
+	ftmf4_qrotate(&tempFront, qOrigin);
 
-	// get up using up and front
-	up = ftmf4_vcross(front, right);
+	right = ftmf4_vcross(baseUp, tempFront);
+
+	t_FTMFLOAT4 qPitch = ftmf4_set_rodrigues(p, right);
+	qOrigin = ftmf4_qmult(qPitch, qOrigin);
+	ftmf4_qnormalize(&qOrigin);
+
+	up = baseUp;
+	ftmf4_qrotate(&up, qOrigin);
+	front = baseFront;
+	ftmf4_qrotate(&front, qOrigin);
 }
 
 void FtCamera::zoom(float const dist)
@@ -157,6 +150,5 @@ void FtCamera::resetPose()
 	front = ftmf4_set_vector(0.0f, 0.0f, 1.0f, 0.0f);
 	right = ftmf4_set_vector(1.0f, 0.0f, 0.0f, 0.0f);
 	up = ftmf4_set_vector(0.0f, 1.0f, 0.0f, 0.0f);
-	yaw = 0;
-	pitch = 0;
+	qOrigin = ftmf4_set_id();
 }
