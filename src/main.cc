@@ -107,13 +107,50 @@ int main(int argc, char* argv[])
 
 	/* ------------------------------- Define Scene -----------------------------------*/
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	t_FTMFLOAT4X4 modelMatrix = ftmf44_set_scale(ftmf4_set_vector(0.1, 0.1, 0.1, 1));
-	FtCamera camera(ftmf4_set_vector(0, 0, -10.0, 1), 5.0f, 15.0f, static_cast<float>(VIEWPORT_WIDTH) / VIEWPORT_HEIGHT, 90.0f);
+	FtCamera camera(ftmf4_set_vector(0, 0, -10.0, 1), 1.0f, 100.0f, static_cast<float>(VIEWPORT_WIDTH) / VIEWPORT_HEIGHT, 45.0f);
 
 	glfwSetWindowUserPointer(hWindow, &camera);
 	RegisterInputEvent(hWindow);
+
+	camera.setAngle(0.0f, -89.0f);
+	t_FTMFLOAT4X4 test = camera.getVMatrix();
+	for (int r = 0; r < 4; ++r)
+	{
+		for (int c = 0; c < 4; ++c)
+		{
+			std::cout << test.data[r][c] << ' ';
+		}
+		std::cout << '\n';
+	}
+	// t_FTMFLOAT4 test = ftmf4_set_vector(50.0f, 50.0f, 0.0f, 1.0f);
+	// for (int pitch = -89; pitch <= 0; ++pitch)
+	// {
+	// 	camera.setAngle(0.0f, pitch);
+	// 	t_FTMFLOAT4X4 vp = camera.getVPMatrix();
+	// 	t_FTMFLOAT4X4 mvp = ftmf44_mult(&modelMatrix, &vp);
+	// 	t_FTMFLOAT4 result = ftmf44_affine(&test, &mvp);
+	// 	std::cout << "Pitch : " << pitch << " RU pos : " << result.data[0] << ' ' << result.data[1] << ' ' << result.data[2] << ' ' << result.data[3] << '\n';
+	// 	if ([](t_FTMFLOAT4 const& p) {
+	// 		for (int i = 0; i < 3; ++i)
+	// 		{
+	// 			const float f = p.data[i] / p.data[3];
+	// 			if (f < -1.0f || 1.0f < f)
+	// 			{
+	// 				return false;
+	// 			}
+	// 		}
+	// 		return true;
+	// 		}(result))
+	// 	{
+	// 		std::cout << "In NDC\n";
+	// 	}
+	// 	else
+	// 	{
+	// 		std::cout << "Out NDC\n";
+	// 	}
+	// }
 
 	// render loop, each iteration consist a frame
 	while (!glfwWindowShouldClose(hWindow))
