@@ -14,7 +14,31 @@ FtObj::FtObj(t_FTMFLOAT4 const& startPos, float const startYaw, float const star
 	moveAngle(startYaw, startPitch);
 }
 
+FtObj::FtObj(FtObj const& other) :
+	pos(other.pos),
+	front(other.front),
+	right(other.right),
+	up(other.up),
+	qOrigin(other.qOrigin),
+	pitch(other.pitch)
+{
+}
+
 FtObj::~FtObj() {}
+
+FtObj& FtObj::operator=(FtObj const& rhs)
+{
+	if (this != &rhs)
+	{
+		this->pos = rhs.pos;
+		this->front = rhs.front;
+		this->right = rhs.right;
+		this->up = rhs.up;
+		this->qOrigin = rhs.qOrigin;
+		this->pitch = rhs.pitch;
+	}
+	return (*this);
+}
 
 // setter
 void FtObj::setPos(t_FTMFLOAT4 const& p)

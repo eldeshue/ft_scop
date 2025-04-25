@@ -13,8 +13,6 @@ class FtObj
 {
 private:
 	FtObj() = delete;
-	FtObj(FtObj const&) = delete;
-	FtObj& operator=(FtObj const&) = delete;
 
 protected:
 	t_FTMFLOAT4 pos;
@@ -27,7 +25,10 @@ protected:
 
 public:
 	FtObj(t_FTMFLOAT4 const& startPos, float const startYaw, float const startPitch);
+	FtObj(FtObj const& other);
 	~FtObj();
+
+	FtObj& operator=(FtObj const& rhs);
 
 	// setter
 	void setPos(t_FTMFLOAT4 const& p);
