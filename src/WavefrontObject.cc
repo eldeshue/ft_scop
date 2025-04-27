@@ -1,6 +1,7 @@
 
 #include "WavefrontObject.h"
 
+#include <iostream>
 
 WfObj::WfObj(std::string const& name) :
 	name(name),
@@ -15,8 +16,11 @@ WfObj::WfObj(std::string const& name) :
 
 WfObj::~WfObj()
 {
-	glDeleteVertexArrays(1, &hVAO);
-	glDeleteBuffers(4, bOB.data());
+	if (hVAO != 0)
+	{
+		glDeleteVertexArrays(1, &hVAO);
+		glDeleteBuffers(4, bOB.data());
+	}
 }
 
 // get
@@ -49,8 +53,7 @@ size_t WfObj::getIdxBufferSize() const
 void WfObj::initHandles()
 {
 	// erase prev handles
-	glDeleteVertexArrays(1, &hVAO);
-	glDeleteBuffers(4, bOB.data());
+	deleteHandles();
 
 	// create new handles
 	// create buffer objects
@@ -93,6 +96,16 @@ void WfObj::initHandles()
 
 	// end setting
 	glBindVertexArray(0);
+}
+
+void WfObj::deleteHandles()
+{
+	if (hVAO != 0)
+	{
+		glDeleteVertexArrays(1, &hVAO);
+		glDeleteBuffers(4, bOB.data());
+		hVAO = 0;
+	}
 }
 
 GLuint WfObj::gethVAO() const

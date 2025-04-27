@@ -46,6 +46,7 @@ public:
 
 	// init handles
 	void initHandles();
+	void deleteHandles();	// must be called before destruction
 
 	GLuint gethVAO() const;
 };
