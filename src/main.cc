@@ -1,9 +1,7 @@
 
 #include <iostream>
-#include <functional>
 #include <string_view>
 #include <vector>
-#include <array>
 #include <cmath>
 
 // set OpenGL
@@ -15,6 +13,8 @@
 #include "Shader.h"
 
 #include "FtCamera.h"
+#include "WavefrontObject.h"
+#include "WavefrontObjectView.h"
 
 extern "C"
 {
@@ -76,24 +76,16 @@ int main(int argc, char* argv[])
 
 	// Get render resource
 	// vertices, render topology, texture(?)
-	std::vector<Point> vertices = {
-		{-50, 50, 0, 1.0, 0.0, 0.0, 0.0, 1.0},
-		{50, 50, 0, 0.0, 1.0, 0.0, 1.0, 1.0},
-		{50, -50, 0, 0.0, 0.0, 1.0, 1.0, 0.0},
-		{-50, -50, 0, 1.0, 1.0, 1.0, 0.0, 0.0}
-	};
-
-	std::vector<uint32_t> indices1 = {
+	WfObj obj("test obj");
+	obj.getVPosBuffer() = { {-50, 50, 0}, {50, 50, 0}, {50, -50, 0}, {-50, -50, 0} };
+	obj.getNVecBuffer() = { {1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}, {0.0, 1.0, 1.0} };
+	obj.getTexPosBuffer() = { {0.0, 1.0}, {1.0, 1.0}, {1.0, 0.0}, {0.0, 0.0} };
+	obj.getIdxBuffer() = {
 		0, 3, 1,
 		1, 3, 2
 	};
 
 	/*-------------------------- Get Render Resources --------------------------------*/
-	glEnable(GL_DEPTH_TEST);
-
-	GLuint const hVBO = CreateVBO(vertices);
-	GLuint const hEBO = CreateEBO(indices1);
-	GLuint const hVAO = CreateVAO(hVBO, hEBO);
 	GLuint const hTexture = CreateTexture2D("./textures/container.jpg");
 
 	Shader shaderProgram("./shader/VertexShader.glsl", "./shader/FragmentShader.glsl");
@@ -105,9 +97,12 @@ int main(int argc, char* argv[])
 	}
 	GLint mvpMatUniformLoc = glGetUniformLocation(shaderProgram.ID, "mvp");
 
+
 	/* ------------------------------- Define Scene -----------------------------------*/
 
 	t_FTMFLOAT4X4 modelMatrix = ftmf44_set_scale(ftmf4_set_vector(0.1, 0.1, 0.1, 1));
+
+	WfObjView objv(ftmf4_set_vector(0.0, 0.0, 0.0, 1.0), 0, 0, 0.1, &obj, shaderProgram.ID, hTexture);
 
 	FtCamera camera(ftmf4_set_vector(0, 0, -10.0, 1), 1.0f, 100.0f, static_cast<float>(VIEWPORT_WIDTH) / VIEWPORT_HEIGHT, 45.0f);
 	glfwSetWindowUserPointer(hWindow, &camera);
@@ -120,28 +115,19 @@ int main(int argc, char* argv[])
 	{
 		HandleInput(hWindow);
 
-		t_FTMFLOAT4X4 vp = camera.getVPMatrix();
-		t_FTMFLOAT4X4 mvp = ftmf44_mult(&modelMatrix, &vp);
-
 		// render routine start
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// update resource
-		shaderProgram.use();
-		glUniformMatrix4fv(mvpMatUniformLoc, 1, GL_FALSE, mvp.data[0]);
-
-		glBindTexture(GL_TEXTURE_2D, hTexture);	// by binding texture, don't need to update uniform
-		RenderTriangles(2, hVAO, shaderProgram.ID);
+		// draw call
+		t_FTMFLOAT4X4 vp = camera.getVPMatrix();
+		objv.draw(vp);
 
 		glfwSwapBuffers(hWindow);
 		glfwPollEvents();	// check event
 	}
 
 	// clean up resources
-	glDeleteVertexArrays(1, &hVAO);
-	glDeleteBuffers(1, &hVBO);	// buffer delete
-	glDeleteBuffers(1, &hEBO);	// buffer delete
 	glDeleteTextures(1, &hTexture);
 
 	glfwTerminate();	// window destroy
