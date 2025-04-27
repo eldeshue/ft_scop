@@ -21,8 +21,6 @@ extern "C"
 #include "ft_math/ft_math.h"
 }
 
-void RenderTriangles(GLsizei const numTri, GLuint const hVAO, GLuint const hShaderProgram);
-
 int main(int argc, char* argv[])
 {
 	/*------------------------- Input --------------------------------*/
@@ -84,6 +82,7 @@ int main(int argc, char* argv[])
 		0, 3, 1,
 		1, 3, 2
 	};
+	obj.initHandles();
 
 	/*-------------------------- Get Render Resources --------------------------------*/
 	GLuint const hTexture = CreateTexture2D("./textures/container.jpg");
@@ -95,12 +94,8 @@ int main(int argc, char* argv[])
 		glfwTerminate();
 		return -1;
 	}
-	GLint mvpMatUniformLoc = glGetUniformLocation(shaderProgram.ID, "mvp");
-
 
 	/* ------------------------------- Define Scene -----------------------------------*/
-
-	t_FTMFLOAT4X4 modelMatrix = ftmf44_set_scale(ftmf4_set_vector(0.1, 0.1, 0.1, 1));
 
 	WfObjView objv(ftmf4_set_vector(0.0, 0.0, 0.0, 1.0), 0, 0, 0.1, &obj, shaderProgram.ID, hTexture);
 
@@ -120,8 +115,8 @@ int main(int argc, char* argv[])
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// draw call
-		t_FTMFLOAT4X4 vp = camera.getVPMatrix();
-		objv.draw(vp);
+		objv.moveAngle(0.05, 0.0);	// rotate object automatically
+		objv.draw(camera.getVPMatrix());
 
 		glfwSwapBuffers(hWindow);
 		glfwPollEvents();	// check event
@@ -129,20 +124,8 @@ int main(int argc, char* argv[])
 
 	// clean up resources
 	glDeleteTextures(1, &hTexture);
-
-	glfwTerminate();	// window destroy
+	obj.deleteHandles();
+	glfwTerminate();	// window and OpenGL context destruction
 
 	return 0;
 }
-
-/**
- * @brief render multiple triangles
- */
-void RenderTriangles(GLsizei const numTri, GLuint const hVAO, GLuint const hShaderProgram)
-{
-	glUseProgram(hShaderProgram);	// bind shader program
-	glBindVertexArray(hVAO);		// bind VAO
-	glDrawElements(GL_TRIANGLES, numTri * 3, GL_UNSIGNED_INT, 0);	// topology, size, type, start offset
-	glBindVertexArray(0);		// bind VAO
-}
-
