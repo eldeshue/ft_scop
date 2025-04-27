@@ -53,7 +53,8 @@ t_FTMFLOAT4X4 WfObjView::getMMatrix() const
 
 void WfObjView::draw(t_FTMFLOAT4X4 const& vp) const
 {
-	t_FTMFLOAT4X4 mvp = ftmf44_mult(&getMMatrix(), &vp);
+	t_FTMFLOAT4X4 m = getMMatrix();
+	t_FTMFLOAT4X4 mvp = ftmf44_mult(&m, &vp);
 
 	glUseProgram(hShader);
 	glUniformMatrix4fv(mvpMatUniformLoc, 1, GL_FALSE, mvp.data[0]);
