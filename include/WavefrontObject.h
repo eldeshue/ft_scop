@@ -42,6 +42,7 @@ public:
 	VecF3& getNVecBuffer();
 	VecF2& getTexPosBuffer();
 	std::vector<uint32_t>& getIdxBuffer();
+	size_t getIdxBufferSize() const;
 
 	// init handles
 	void initHandles();

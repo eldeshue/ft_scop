@@ -40,6 +40,11 @@ std::vector<uint32_t>& WfObj::getIdxBuffer()
 	return indexBuf;
 }
 
+size_t WfObj::getIdxBufferSize() const
+{
+	return indexBuf.size();
+}
+
 // init handles
 void WfObj::initHandles()
 {
