@@ -135,10 +135,22 @@ void WfParser::evalGroup(std::string const& line)
 {
 	std::stringstream ss(line);
 	std::string name;
+	char c;
 
-	ss >> name; // drop identifier
-	ss >> name;
+	ss >> c >> name;
 	curObjName = name;
+}
+
+void clearBuffers(
+	std::deque<Float3>& v,
+	std::deque<Float2>& vt,
+	std::deque<Float3>& vn,
+	std::deque<Vertex>& vf)
+{
+	v.clear();
+	vt.clear();
+	vn.clear();
+	vf.clear();
 }
 
 std::deque<WfObj*> WfParser::parse(std::string_view fileName, std::stringstream& ss)
@@ -171,6 +183,7 @@ std::deque<WfObj*> WfParser::parse(std::string_view fileName, std::stringstream&
 			if (!faceVertexBuffer.empty())
 			{
 				result.push_back(new WfObj(curObjName, faceVertexBuffer));
+				clearBuffers(vtxPosBuffer, txtPosBuffer, vtxNormBuffer, faceVertexBuffer);
 			}
 			evalGroup(lineBuffer);
 			curObjName = std::string(fileName) + "_" + curObjName;
@@ -183,6 +196,9 @@ std::deque<WfObj*> WfParser::parse(std::string_view fileName, std::stringstream&
 
 	// add single object
 	if (!faceVertexBuffer.empty())
+	{
 		result.push_back(new WfObj(curObjName, faceVertexBuffer));
+		clearBuffers(vtxPosBuffer, txtPosBuffer, vtxNormBuffer, faceVertexBuffer);
+	}
 	return result;
 }
