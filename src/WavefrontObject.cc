@@ -2,6 +2,7 @@
 #include "WavefrontObject.h"
 
 #include <iostream>
+#include <numeric>
 
 WfObj::WfObj(std::string const& name) :
 	name(name),
@@ -10,6 +11,16 @@ WfObj::WfObj(std::string const& name) :
 	hVAO(0)
 {
 	std::fill(hBO.begin(), hBO.end(), 0);
+}
+
+
+WfObj::WfObj(std::string const& name, std::deque<Vertex> const& faceVertexBuffer) :
+	name(name),
+	vertexBuf(faceVertexBuffer.begin(), faceVertexBuffer.end()),
+	indexBuf(vertexBuf.size(), 0),
+	hVAO(0)
+{
+	std::iota(indexBuf.begin(), indexBuf.end(), 0);
 }
 
 WfObj::~WfObj()

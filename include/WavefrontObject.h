@@ -3,6 +3,7 @@
 #define WAVEFRONT_OBJECT_H
 
 #include <vector>
+#include <deque>
 #include <array>
 #include <string>
 #include <glad/glad.h>
@@ -33,6 +34,8 @@ private:
 
 public:
 	WfObj(std::string const& name);
+	WfObj(std::string const& name, std::deque<Vertex> const& faceVertexBuffer);
+
 	~WfObj();
 
 	// get
