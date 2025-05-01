@@ -2,16 +2,25 @@
 #include "WavefrontObject.h"
 
 #include <iostream>
+#include <numeric>
 
 WfObj::WfObj(std::string const& name) :
 	name(name),
-	vPosBuf(),
-	vNormVecBuf(),
-	tPosBuf(),
+	vertexBuf(),
 	indexBuf(),
 	hVAO(0)
 {
-	std::fill(bOB.begin(), bOB.end(), 0);
+	std::fill(hBO.begin(), hBO.end(), 0);
+}
+
+
+WfObj::WfObj(std::string const& name, std::deque<Vertex> const& faceVertexBuffer) :
+	name(name),
+	vertexBuf(faceVertexBuffer.begin(), faceVertexBuffer.end()),
+	indexBuf(vertexBuf.size(), 0),
+	hVAO(0)
+{
+	std::iota(indexBuf.begin(), indexBuf.end(), 0);
 }
 
 WfObj::~WfObj()
@@ -19,24 +28,13 @@ WfObj::~WfObj()
 	if (hVAO != 0)
 	{
 		glDeleteVertexArrays(1, &hVAO);
-		glDeleteBuffers(4, bOB.data());
+		glDeleteBuffers(2, hBO.data());
 	}
 }
 
-// get
-VecF3& WfObj::getVPosBuffer()
+std::vector<Vertex>& WfObj::getVtxBuffer()
 {
-	return vPosBuf;
-}
-
-VecF3& WfObj::getNVecBuffer()
-{
-	return vNormVecBuf;
-}
-
-VecF2& WfObj::getTexPosBuffer()
-{
-	return tPosBuf;
+	return vertexBuf;
 }
 
 std::vector<uint32_t>& WfObj::getIdxBuffer()
@@ -57,18 +55,14 @@ void WfObj::initHandles()
 
 	// create new handles
 	// create buffer objects
-	glGenBuffers(4, bOB.data());
+	glGenBuffers(2, hBO.data());
 
 	// Vertex buffer
-	glBindBuffer(GL_ARRAY_BUFFER, bOB[0]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(Float3) * vPosBuf.size(), vPosBuf.data(), GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, bOB[1]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(Float3) * vNormVecBuf.size(), vNormVecBuf.data(), GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, bOB[2]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(Float2) * tPosBuf.size(), tPosBuf.data(), GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, hBO[0]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * vertexBuf.size(), vertexBuf.data(), GL_STATIC_DRAW);
 
 	// EBO
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bOB[3]);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, hBO[1]);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32_t) * indexBuf.size(), indexBuf.data(), GL_STATIC_DRAW);
 
 	// VAO
@@ -77,22 +71,22 @@ void WfObj::initHandles()
 
 	// bind VBOs, input layout
 	// 0, vertex pos
-	glBindBuffer(GL_ARRAY_BUFFER, bOB[0]);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Float3), reinterpret_cast<void*>(0));
+	glBindBuffer(GL_ARRAY_BUFFER, hBO[0]);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(0));
 	glEnableVertexAttribArray(0);
 
 	// 1, vertex normal vector
-	glBindBuffer(GL_ARRAY_BUFFER, bOB[1]);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Float3), reinterpret_cast<void*>(0));
+	glBindBuffer(GL_ARRAY_BUFFER, hBO[0]);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(sizeof(float) * 3));
 	glEnableVertexAttribArray(1);
 
 	// 2, texture coordinates
-	glBindBuffer(GL_ARRAY_BUFFER, bOB[2]);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Float2), reinterpret_cast<void*>(0));
+	glBindBuffer(GL_ARRAY_BUFFER, hBO[0]);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(sizeof(float) * 6));
 	glEnableVertexAttribArray(2);
 
 	// bind EBO
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bOB[3]);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, hBO[1]);
 
 	// end setting
 	glBindVertexArray(0);
@@ -103,7 +97,7 @@ void WfObj::deleteHandles()
 	if (hVAO != 0)
 	{
 		glDeleteVertexArrays(1, &hVAO);
-		glDeleteBuffers(4, bOB.data());
+		glDeleteBuffers(2, hBO.data());
 		hVAO = 0;
 	}
 }

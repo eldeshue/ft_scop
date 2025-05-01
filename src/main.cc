@@ -1,5 +1,9 @@
 
 #include <iostream>
+#include <fstream>
+#include <sstream>
+#include <algorithm>
+
 #include <string_view>
 #include <vector>
 #include <cmath>
@@ -15,6 +19,7 @@
 #include "FtCamera.h"
 #include "WavefrontObject.h"
 #include "WavefrontObjectView.h"
+#include "WavefrontObjectParser.h"
 
 extern "C"
 {
@@ -65,26 +70,26 @@ int main(int argc, char* argv[])
 
 	// define view port
 	glViewport(VIEWPORT_LD_X, VIEWPORT_LD_Y, VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
+	glEnable(GL_DEPTH_TEST);
 
 	/*------------------------- Parse --------------------------------*/
+	// file open
+	std::fstream objFileStream(objFilePathName.data());
+	if (!objFileStream.is_open())
+	{
+		std::cerr << "Error : failed to open the file" << std::endl;
+		return -1;
+	}
 
-	// initialze filestream
+	// read file
+	std::stringstream objSStream;
+	objSStream << objFileStream.rdbuf();
 
-	// parse and initialze resources
-
-	// Get render resource
-	// vertices, render topology, texture(?)
-	WfObj obj("test obj");
-	obj.getVPosBuffer() = { {-50, 50, 0}, {50, 50, 0}, {50, -50, 0}, {-50, -50, 0} };
-	obj.getNVecBuffer() = { {1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}, {0.0, 1.0, 1.0} };
-	obj.getTexPosBuffer() = { {0.0, 1.0}, {1.0, 1.0}, {1.0, 0.0}, {0.0, 0.0} };
-	obj.getIdxBuffer() = {
-		0, 3, 1,
-		1, 3, 2
-	};
-	obj.initHandles();
+	// parse, get wavefront 3D object
+	std::deque<WfObj*> renderObjBuf = WfParser::parse(objFilePathName, objSStream);	// for further purpose, we need scene file
 
 	/*-------------------------- Get Render Resources --------------------------------*/
+
 	GLuint const hTexture = CreateTexture2D("./textures/container.jpg");
 
 	Shader shaderProgram("./shader/VertexShader.glsl", "./shader/FragmentShader.glsl");
@@ -97,9 +102,14 @@ int main(int argc, char* argv[])
 
 	/* ------------------------------- Define Scene -----------------------------------*/
 
-	WfObjView objv(ftmf4_set_vector(0.0, 0.0, 0.0, 1.0), 0, 0, 0.1, &obj, shaderProgram.ID, hTexture);
+	std::vector<WfObjView> renderTargets;
+	std::transform(renderObjBuf.begin(), renderObjBuf.end(), std::back_inserter(renderTargets),
+		[&](WfObj* obj) {
+			obj->initHandles();
+			return WfObjView(ftmf4_set_vector(0.0, 0.0, 0.0, 1.0), 0, 0, 10.0, obj, shaderProgram.ID, hTexture);
+		});
 
-	FtCamera camera(ftmf4_set_vector(0, 0, -10.0, 1), 1.0f, 100.0f, static_cast<float>(VIEWPORT_WIDTH) / VIEWPORT_HEIGHT, 45.0f);
+	FtCamera camera(ftmf4_set_vector(0, 0, -10.0, 1), 5.0f, 1000.0f, static_cast<float>(VIEWPORT_WIDTH) / VIEWPORT_HEIGHT, 45.0f);
 	glfwSetWindowUserPointer(hWindow, &camera);
 
 	// set events handled by glfw window
@@ -115,8 +125,11 @@ int main(int argc, char* argv[])
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// draw call
-		objv.moveAngle(0.05, 0.0);	// rotate object automatically
-		objv.draw(camera.getVPMatrix());
+		std::for_each(renderTargets.begin(), renderTargets.end(),
+			[&](WfObjView& objv) {
+				objv.moveAngle(0.05, 0.0);
+				objv.draw(camera.getVPMatrix());
+			});
 
 		glfwSwapBuffers(hWindow);
 		glfwPollEvents();	// check event
@@ -124,7 +137,7 @@ int main(int argc, char* argv[])
 
 	// clean up resources
 	glDeleteTextures(1, &hTexture);
-	obj.deleteHandles();
+	std::for_each(renderObjBuf.begin(), renderObjBuf.end(), [](WfObj* obj) { obj->deleteHandles(); delete obj; });
 	glfwTerminate();	// window and OpenGL context destruction
 
 	return 0;

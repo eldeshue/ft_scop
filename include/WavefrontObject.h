@@ -3,15 +3,16 @@
 #define WAVEFRONT_OBJECT_H
 
 #include <vector>
+#include <deque>
 #include <array>
 #include <string>
 #include <glad/glad.h>
 
-using Float3 = std::array<float, 3>;
-using Float2 = std::array<float, 2>;
-
-using VecF3 = std::vector<Float3>;
-using VecF2 = std::vector<Float2>;
+struct Vertex {
+	float px, py, pz;
+	float vnx, vny, vnz;
+	float tx, ty;
+};
 
 // created by parser
 class WfObj
@@ -24,23 +25,21 @@ private:
 	std::string const name;
 
 	// buffer
-	VecF3 vPosBuf;
-	VecF3 vNormVecBuf;
-	VecF2 tPosBuf;
+	std::vector<Vertex> vertexBuf;
 	std::vector<uint32_t> indexBuf;
 
 	// handles
-	std::array<GLuint, 4> bOB;
 	GLuint hVAO;
+	std::array<GLuint, 2> hBO;
 
 public:
 	WfObj(std::string const& name);
+	WfObj(std::string const& name, std::deque<Vertex> const& faceVertexBuffer);
+
 	~WfObj();
 
 	// get
-	VecF3& getVPosBuffer();
-	VecF3& getNVecBuffer();
-	VecF2& getTexPosBuffer();
+	std::vector<Vertex>& getVtxBuffer();
 	std::vector<uint32_t>& getIdxBuffer();
 	size_t getIdxBufferSize() const;
 
