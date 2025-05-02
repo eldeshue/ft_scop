@@ -29,6 +29,9 @@ public:
 
 	WfObjView& operator=(WfObjView const& rhs);
 
+	GLuint getShader() const;
+	void setShader(GLuint hNewShader);
+
 	// get model matrix from position and pose
 	t_FTMFLOAT4X4 getMMatrix() const;
 

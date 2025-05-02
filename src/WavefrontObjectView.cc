@@ -37,6 +37,16 @@ WfObjView& WfObjView::operator=(WfObjView const& rhs)
 	return *this;
 }
 
+GLuint WfObjView::getShader() const
+{
+	return hShader;
+}
+
+void WfObjView::setShader(GLuint hNewShader)
+{
+	hShader = hNewShader;
+}
+
 // get model matrix from position and pose
 t_FTMFLOAT4X4 WfObjView::getMMatrix() const
 {
