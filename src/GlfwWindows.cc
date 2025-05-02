@@ -1,6 +1,10 @@
 
 #include "GlfwWindows.h"
 #include "FtCamera.h"
+#include "WavefrontObjectView.h"
+#include "Shader.h"
+
+using UpdateContext = std::tuple<WfObjView*, FtCamera*, GLuint, GLuint>;
 
 /**
  * @brief set state of glfw
@@ -32,7 +36,7 @@ void RegisterInputEvent(GLFWwindow* const hWindow)
 {
 	// resizing
 	glfwSetFramebufferSizeCallback(hWindow, [](GLFWwindow* phWin, int w, int h) {
-		FtCamera* const pCam = static_cast<FtCamera*>(glfwGetWindowUserPointer(phWin));
+		auto [pObjv, pCam, hTextureShader, hCheckerShader] = *static_cast<UpdateContext*>(glfwGetWindowUserPointer(phWin));
 
 		pCam->setAspectRatio(static_cast<float>(w) / h);
 		glViewport(VIEWPORT_LD_X, VIEWPORT_LD_Y, w, h);
@@ -45,7 +49,7 @@ void RegisterInputEvent(GLFWwindow* const hWindow)
 		static double const sRot = 0.4;
 
 		// update
-		FtCamera* const pCam = static_cast<FtCamera*>(glfwGetWindowUserPointer(phWin));
+		auto [pObjv, pCam, hTextureShader, hCheckerShader] = *static_cast<UpdateContext*>(glfwGetWindowUserPointer(phWin));
 		if (pCam->getRot())
 		{
 			pCam->moveAngle(-(curX - prevX) * sRot, -(curY - prevY) * sRot);
@@ -56,7 +60,7 @@ void RegisterInputEvent(GLFWwindow* const hWindow)
 
 	// mouse cursor drag
 	glfwSetMouseButtonCallback(hWindow, [](GLFWwindow* phWin, int button, int action, int mods) {
-		FtCamera* const pCam = static_cast<FtCamera*>(glfwGetWindowUserPointer(phWin));
+		auto [pObjv, pCam, hTextureShader, hCheckerShader] = *static_cast<UpdateContext*>(glfwGetWindowUserPointer(phWin));
 		if (button == GLFW_MOUSE_BUTTON_LEFT)
 		{
 			mods = 0;
@@ -69,7 +73,7 @@ void RegisterInputEvent(GLFWwindow* const hWindow)
 
 	// mouse scroll
 	glfwSetScrollCallback(hWindow, [](GLFWwindow* phWin, double xOffset, double yOffset) {
-		FtCamera* const pCam = static_cast<FtCamera*>(glfwGetWindowUserPointer(phWin));
+		auto [pObjv, pCam, hTextureShader, hCheckerShader] = *static_cast<UpdateContext*>(glfwGetWindowUserPointer(phWin));
 		static double const sensitivity = 2.5;
 		pCam->zoom(-sensitivity * (xOffset + yOffset));
 		});
@@ -79,32 +83,14 @@ void RegisterInputEvent(GLFWwindow* const hWindow)
 		static constexpr float const vel = 1.2;
 		static bool isWireFrame = false;
 
-		FtCamera* const pCam = static_cast<FtCamera*>(glfwGetWindowUserPointer(phWin));
+		auto [pObjv, pCam, hTextureShader, hCheckerShader] = *static_cast<UpdateContext*>(glfwGetWindowUserPointer(phWin));
 		scanCode = 0;
 		mode = 0;
 		isWireFrame += mode + scanCode;
 		if (action == GLFW_PRESS)
 		{
 			switch (key) {
-			case GLFW_KEY_W:
-				pCam->movePos(0.0f, 0.0f, vel);
-				break;
-			case GLFW_KEY_A:
-				pCam->movePos(-vel, 0.0f, 0.0f);
-				break;
-			case GLFW_KEY_S:
-				pCam->movePos(0.0f, 0.0f, -vel);
-				break;
-			case GLFW_KEY_D:
-				pCam->movePos(vel, 0.0f, 0.0f);
-				break;
-			case GLFW_KEY_Z:
-				pCam->movePos(0.0f, -vel, 0.0f);
-				break;
-			case GLFW_KEY_X:
-				pCam->movePos(0.0f, vel, 0.0f);
-				break;
-			case GLFW_KEY_TAB:
+			case GLFW_KEY_TAB:	// toggle wireframe rendering
 				if (isWireFrame == false)
 				{
 					glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -119,7 +105,51 @@ void RegisterInputEvent(GLFWwindow* const hWindow)
 			case GLFW_KEY_BACKSPACE:
 				pCam->resetPose();
 				break;
+			case GLFW_KEY_LEFT_CONTROL:	// toggle shader
+				if (pObjv->getShader() == hTextureShader)
+					pObjv->setShader(hCheckerShader);
+				else
+					pObjv->setShader(hTextureShader);
+				break;
 			}
+		}
+		switch (key) {
+		case GLFW_KEY_W:	// move camera
+			pCam->movePos(0.0f, 0.0f, vel);
+			break;
+		case GLFW_KEY_A:
+			pCam->movePos(-vel, 0.0f, 0.0f);
+			break;
+		case GLFW_KEY_S:
+			pCam->movePos(0.0f, 0.0f, -vel);
+			break;
+		case GLFW_KEY_D:
+			pCam->movePos(vel, 0.0f, 0.0f);
+			break;
+		case GLFW_KEY_Z:
+			pCam->movePos(0.0f, -vel, 0.0f);
+			break;
+		case GLFW_KEY_X:
+			pCam->movePos(0.0f, vel, 0.0f);
+			break;
+		case GLFW_KEY_UP:	// move objeect
+			pObjv->movePos(0.0f, 0.0f, vel);
+			break;
+		case GLFW_KEY_LEFT:
+			pObjv->movePos(-vel, 0.0f, 0.0f);
+			break;
+		case GLFW_KEY_DOWN:
+			pObjv->movePos(0.0f, 0.0f, -vel);
+			break;
+		case GLFW_KEY_RIGHT:
+			pObjv->movePos(vel, 0.0f, 0.0f);
+			break;
+		case GLFW_KEY_COMMA:
+			pObjv->movePos(0.0f, -vel, 0.0f);
+			break;
+		case GLFW_KEY_PERIOD:
+			pObjv->movePos(0.0f, vel, 0.0f);
+			break;
 		}
 		});
 }
