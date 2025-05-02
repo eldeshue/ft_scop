@@ -183,7 +183,6 @@ std::deque<WfObj*> WfParser::parse(std::string_view fileName, std::stringstream&
 			if (!faceVertexBuffer.empty())
 			{
 				result.push_back(new WfObj(curObjName, faceVertexBuffer));
-				clearBuffers(vtxPosBuffer, txtPosBuffer, vtxNormBuffer, faceVertexBuffer);
 			}
 			evalGroup(lineBuffer);
 			curObjName = std::string(fileName) + "_" + curObjName;
