@@ -48,14 +48,14 @@ void WfParser::evalFace(std::string const& line)	// parse "f i/i/i i/i/i i/i/i"
 {
 	std::stringstream ss(line);
 	std::array<int, 3> pIdx;
-	std::array<Vertex, 3> tempVertexBuffer;
+	std::deque<Vertex> tempVertexBuffer;
 	char c;
 
 	ss >> c;
-	for (int i = 0; i < 3; ++i)
+	while (true)
 	{
 		std::fill(pIdx.begin(), pIdx.end(), 0);
-		tempVertexBuffer[i] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
+		tempVertexBuffer.push_back({ 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f });
 
 		// parse and get index of content
 		if (!(ss >> pIdx[0]))
@@ -103,9 +103,9 @@ void WfParser::evalFace(std::string const& line)	// parse "f i/i/i i/i/i i/i/i"
 		if (pIdx[0] >= 0)
 		{
 			auto const [x, y, z] = vtxPosBuffer[pIdx[0]];
-			tempVertexBuffer[i].px = x;
-			tempVertexBuffer[i].py = y;
-			tempVertexBuffer[i].pz = z;
+			tempVertexBuffer.back().px = x;
+			tempVertexBuffer.back().py = y;
+			tempVertexBuffer.back().pz = z;
 		}
 		else	// necessary
 		{
@@ -115,20 +115,27 @@ void WfParser::evalFace(std::string const& line)	// parse "f i/i/i i/i/i i/i/i"
 		if (pIdx[1] >= 0)
 		{
 			auto const [x, y] = txtPosBuffer[pIdx[1]];
-			tempVertexBuffer[i].tx = x;
-			tempVertexBuffer[i].ty = y;
+			tempVertexBuffer.back().tx = x;
+			tempVertexBuffer.back().ty = y;
 		}
 		if (pIdx[2] >= 0)
 		{
 			auto const [x, y, z] = vtxNormBuffer[pIdx[2]];
-			tempVertexBuffer[i].vnx = x;
-			tempVertexBuffer[i].vny = y;
-			tempVertexBuffer[i].vnz = z;
+			tempVertexBuffer.back().vnx = x;
+			tempVertexBuffer.back().vny = y;
+			tempVertexBuffer.back().vnz = z;
 		}
+
+		if (ss.eof())
+			break;
 	}
 
-	for (int i = 0; i < 3; ++i)
+	for (size_t i = 2; i < tempVertexBuffer.size(); ++i)
+	{
+		faceVertexBuffer.push_back(tempVertexBuffer[0]);
+		faceVertexBuffer.push_back(tempVertexBuffer[i - 1]);
 		faceVertexBuffer.push_back(tempVertexBuffer[i]);
+	}
 }
 
 void WfParser::evalGroup(std::string const& line)
@@ -183,7 +190,6 @@ std::deque<WfObj*> WfParser::parse(std::string_view fileName, std::stringstream&
 			if (!faceVertexBuffer.empty())
 			{
 				result.push_back(new WfObj(curObjName, faceVertexBuffer));
-				clearBuffers(vtxPosBuffer, txtPosBuffer, vtxNormBuffer, faceVertexBuffer);
 			}
 			evalGroup(lineBuffer);
 			curObjName = std::string(fileName) + "_" + curObjName;

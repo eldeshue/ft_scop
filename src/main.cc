@@ -72,7 +72,7 @@ int main(int argc, char* argv[])
 	glViewport(VIEWPORT_LD_X, VIEWPORT_LD_Y, VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
 	glEnable(GL_DEPTH_TEST);
 
-	/*------------------------- Parse --------------------------------*/
+	/*-------------------------- Get Render Resources --------------------------------*/
 	// file open
 	std::fstream objFileStream(objFilePathName.data());
 	if (!objFileStream.is_open())
@@ -85,15 +85,16 @@ int main(int argc, char* argv[])
 	std::stringstream objSStream;
 	objSStream << objFileStream.rdbuf();
 
-	// parse, get wavefront 3D object
+	// get wavefront 3D object
 	std::deque<WfObj*> renderObjBuf = WfParser::parse(objFilePathName, objSStream);	// for further purpose, we need scene file
 
-	/*-------------------------- Get Render Resources --------------------------------*/
-
+	// get texture
 	GLuint const hTexture = CreateTexture2D("./textures/container.jpg");
 
-	Shader shaderProgram("./shader/VertexShader.glsl", "./shader/FragmentShader.glsl");
-	if (shaderProgram.ID == 0)
+	// get shaders
+	Shader texturedShaderProgram("./shader/VertexShader.glsl", "./shader/TexturedFShader.glsl");
+	Shader checkeredShaderProgram("./shader/VertexShader.glsl", "./shader/NonTexturedFShader.glsl");
+	if (texturedShaderProgram.ID == 0 || checkeredShaderProgram.ID == 0)
 	{
 		std::cerr << "Error : Shader creation failed" << std::endl;
 		glfwTerminate();
@@ -105,23 +106,67 @@ int main(int argc, char* argv[])
 	std::vector<WfObjView> renderTargets;
 	std::transform(renderObjBuf.begin(), renderObjBuf.end(), std::back_inserter(renderTargets),
 		[&](WfObj* obj) {
+			auto& buffer = obj->getVtxBuffer();
+			for (size_t i = 0; i < buffer.size(); ++i)
+			{
+				// check coloring
+				int const q = (i / 3) % 4;
+				switch (q)
+				{
+				case 0:
+					buffer[i].vnx = 0.1f;
+					buffer[i].vny = 0.1f;
+					buffer[i].vnz = 0.1f;
+					break;
+				case 1:
+					buffer[i].vnx = 0.2f;
+					buffer[i].vny = 0.2f;
+					buffer[i].vnz = 0.2f;
+					break;
+				case 2:
+					buffer[i].vnx = 0.3f;
+					buffer[i].vny = 0.3f;
+					buffer[i].vnz = 0.3f;
+					break;
+				case 3:
+					buffer[i].vnx = 0.4f;
+					buffer[i].vny = 0.4f;
+					buffer[i].vnz = 0.4f;
+					break;
+				default:
+					// unreachable
+					break;
+				}
+
+				// texture coordinate setting
+				buffer[i].tx = buffer[i].py;
+				buffer[i].ty = buffer[i].pz;
+
+			}
 			obj->initHandles();
-			return WfObjView(ftmf4_set_vector(0.0, 0.0, 0.0, 1.0), 0, 0, 10.0, obj, shaderProgram.ID, hTexture);
+			return WfObjView(ftmf4_set_vector(0.0, 0.0, 0.0, 1.0), 0, 0, 10.0, obj, checkeredShaderProgram.ID, hTexture);
 		});
 
-	FtCamera camera(ftmf4_set_vector(0, 0, -10.0, 1), 5.0f, 1000.0f, static_cast<float>(VIEWPORT_WIDTH) / VIEWPORT_HEIGHT, 45.0f);
-	glfwSetWindowUserPointer(hWindow, &camera);
+	FtCamera camera(ftmf4_set_vector(0, 0, -60.0, 1), 5.0f, 1000.0f, static_cast<float>(VIEWPORT_WIDTH) / VIEWPORT_HEIGHT, 45.0f);
+
+	// set context to the window's event loop
+	std::tuple<WfObjView*, FtCamera*, GLuint, GLuint> renderContext = std::make_tuple(
+		&renderTargets.front(),
+		&camera,
+		texturedShaderProgram.ID,
+		checkeredShaderProgram.ID
+	);
+	glfwSetWindowUserPointer(hWindow, &renderContext);
 
 	// set events handled by glfw window
 	RegisterInputEvent(hWindow);
 
-	// render loop, each iteration consist a frame
+	/* ---------------------------- render loop ---------------------------- */
 	while (!glfwWindowShouldClose(hWindow))
 	{
 		HandleInput(hWindow);
 
-		// render routine start
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// draw call
