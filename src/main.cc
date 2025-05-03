@@ -72,7 +72,7 @@ int main(int argc, char* argv[])
 	glViewport(VIEWPORT_LD_X, VIEWPORT_LD_Y, VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
 	glEnable(GL_DEPTH_TEST);
 
-	/*------------------------- Parse --------------------------------*/
+	/*-------------------------- Get Render Resources --------------------------------*/
 	// file open
 	std::fstream objFileStream(objFilePathName.data());
 	if (!objFileStream.is_open())
@@ -85,13 +85,13 @@ int main(int argc, char* argv[])
 	std::stringstream objSStream;
 	objSStream << objFileStream.rdbuf();
 
-	// parse, get wavefront 3D object
+	// get wavefront 3D object
 	std::deque<WfObj*> renderObjBuf = WfParser::parse(objFilePathName, objSStream);	// for further purpose, we need scene file
 
-	/*-------------------------- Get Render Resources --------------------------------*/
-
+	// get texture
 	GLuint const hTexture = CreateTexture2D("./textures/container.jpg");
 
+	// get shaders
 	Shader texturedShaderProgram("./shader/VertexShader.glsl", "./shader/TexturedFShader.glsl");
 	Shader checkeredShaderProgram("./shader/VertexShader.glsl", "./shader/NonTexturedFShader.glsl");
 	if (texturedShaderProgram.ID == 0 || checkeredShaderProgram.ID == 0)
@@ -149,25 +149,23 @@ int main(int argc, char* argv[])
 
 	FtCamera camera(ftmf4_set_vector(0, 0, -60.0, 1), 5.0f, 1000.0f, static_cast<float>(VIEWPORT_WIDTH) / VIEWPORT_HEIGHT, 45.0f);
 
+	// set context to the window's event loop
 	std::tuple<WfObjView*, FtCamera*, GLuint, GLuint> renderContext = std::make_tuple(
 		&renderTargets.front(),
 		&camera,
 		texturedShaderProgram.ID,
 		checkeredShaderProgram.ID
 	);
-
-	// set context to the window's event loop
 	glfwSetWindowUserPointer(hWindow, &renderContext);
 
 	// set events handled by glfw window
 	RegisterInputEvent(hWindow);
 
-	// render loop, each iteration consist a frame
+	/* ---------------------------- render loop ---------------------------- */
 	while (!glfwWindowShouldClose(hWindow))
 	{
 		HandleInput(hWindow);
 
-		// render routine start
 		glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
