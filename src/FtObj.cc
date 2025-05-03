@@ -80,6 +80,7 @@ void FtObj::moveAngle(float const dYaw, float const dPitch)
 	ftmf4_qrotate(&tempFront, qOrigin);
 
 	right = ftmf4_vcross(baseUp, tempFront);
+	ftmf4_vnormalize(&right);
 
 	t_FTMFLOAT4 qPitch = ftmf4_set_rodrigues(p, right);
 	qOrigin = ftmf4_qmult(qPitch, qOrigin);
