@@ -168,7 +168,7 @@ int main(int argc, char* argv[])
 		HandleInput(hWindow);
 
 		// render routine start
-		glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+		glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// draw call
